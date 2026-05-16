@@ -23,6 +23,7 @@ int gHeight = 0;
 linkroom::EmulatorSession gSession;
 std::thread* gEmulationThread = nullptr;
 std::atomic<bool> gStopEmulationThread{false};
+std::uint32_t gLastLoggedInputMask = 0;
 
 void release_window_locked() {
     if (gWindow != nullptr) {
@@ -210,6 +211,17 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeResume(JNIEnv*, jobject
     std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "resume runtime");
     gSession.resume();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetInputMask(JNIEnv*, jobject, jint input_mask) {
+    const auto mask = static_cast<std::uint32_t>(input_mask);
+    std::lock_guard<std::mutex> lock(gMutex);
+    gSession.setInputMask(mask);
+    if (mask != gLastLoggedInputMask) {
+        __android_log_print(ANDROID_LOG_DEBUG, kTag, "input mask changed: 0x%03x", mask);
+        gLastLoggedInputMask = mask;
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL

@@ -68,8 +68,15 @@ class EmulatorRuntime {
         return "released: emulator runtime was already released"
     }
 
+    fun setInputMask(inputMask: Int) {
+        if (!released.get()) {
+            NativeEmulatorBridge.setInputMask(inputMask)
+        }
+    }
+
     fun release() {
         if (released.compareAndSet(false, true)) {
+            NativeEmulatorBridge.setInputMask(0)
             surfaceAttached.set(false)
             NativeEmulatorBridge.release()
         }

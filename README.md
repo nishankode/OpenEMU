@@ -14,8 +14,9 @@ This project is a feasibility scaffold only. It includes:
 - Persisted basic ROM library metadata
 - App-private `.gba` copy for native loading
 - mGBA native video rendering through JNI and CMake
+- Minimal on-screen controls for D-pad, A/B, L/R, Start, and Select
 
-This phase can boot and render user-provided `.gba` files through mGBA. No game progress saving, battery saves, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
+This phase can boot, render, and accept basic touch input for user-provided `.gba` files through mGBA. No audio, game progress saving, battery saves, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
 
 ## Requirements
 
@@ -58,13 +59,14 @@ The output should list one device with the `device` state. If it says `unauthori
 9. Continue past onboarding.
 10. Tap import and select your own legally obtained `.gba` or `.zip` file.
 11. Tap the selected `.gba` file in the library to open the native player screen.
-12. Background and resume the app once to confirm the surface detaches and reattaches cleanly.
-13. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
+12. Use the on-screen controls to verify button input reaches the game.
+13. Background and resume the app once to confirm the surface detaches and reattaches cleanly.
+14. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
 
 For app state and native runtime logs:
 
 ```powershell
-adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer GameLibraryViewModel RomPicker
+adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer MgbaCoreAdapter GameLibraryViewModel RomPicker
 ```
 
 ## Notes
@@ -75,6 +77,7 @@ adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRunti
 - If copied ROM content is missing, the library item is shown as unavailable instead of crashing.
 - Game progress saving is not implemented yet. Closing the app and reopening the ROM starts a fresh emulator session.
 - The native surface renders mGBA video after a successful `.gba` load and keeps the placeholder checkerboard as a fallback.
+- Touch input is limited to simple on-screen controls. External controllers, haptics, and layout customization are not implemented yet.
 - If the native library cannot be loaded, the app should show a graceful placeholder status instead of crashing.
 - Future emulator integration should stay behind `EmulatorRuntime` and `NativeEmulatorBridge`.
 - License obligations must be reviewed before vendoring or integrating any emulator core.

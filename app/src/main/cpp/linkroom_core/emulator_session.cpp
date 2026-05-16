@@ -44,6 +44,13 @@ bool EmulatorSession::renderFrameToWindow(ANativeWindow* window, int windowWidth
     return coreAdapter_.renderFrameToWindow(window, windowWidth, windowHeight);
 }
 
+void EmulatorSession::setInputMask(std::uint32_t inputMask) {
+    if (released_) {
+        return;
+    }
+    coreAdapter_.setInputMask(inputMask);
+}
+
 void EmulatorSession::pause() {
     if (released_) {
         return;

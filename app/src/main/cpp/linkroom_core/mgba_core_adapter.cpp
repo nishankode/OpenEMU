@@ -35,6 +35,15 @@ MgbaCoreAdapter::~MgbaCoreAdapter() {
 bool MgbaCoreAdapter::isCoreAvailable() const {
     static_assert(mPLATFORM_GBA == 0, "Unexpected mGBA platform enum layout.");
     static_assert(GBA_KEY_A == 0, "Unexpected mGBA input enum layout.");
+    static_assert(GBA_KEY_B == 1, "Unexpected mGBA B key enum layout.");
+    static_assert(GBA_KEY_SELECT == 2, "Unexpected mGBA Select key enum layout.");
+    static_assert(GBA_KEY_START == 3, "Unexpected mGBA Start key enum layout.");
+    static_assert(GBA_KEY_RIGHT == 4, "Unexpected mGBA Right key enum layout.");
+    static_assert(GBA_KEY_LEFT == 5, "Unexpected mGBA Left key enum layout.");
+    static_assert(GBA_KEY_UP == 6, "Unexpected mGBA Up key enum layout.");
+    static_assert(GBA_KEY_DOWN == 7, "Unexpected mGBA Down key enum layout.");
+    static_assert(GBA_KEY_R == 8, "Unexpected mGBA R key enum layout.");
+    static_assert(GBA_KEY_L == 9, "Unexpected mGBA L key enum layout.");
     struct mCore* core = mCoreCreate(mPLATFORM_GBA);
     if (core == nullptr) {
         return false;
@@ -149,6 +158,7 @@ bool MgbaCoreAdapter::runFrame() {
         return false;
     }
 
+    core_->setKeys(core_, inputMask_);
     core_->runFrame(core_);
     return true;
 }
@@ -215,6 +225,13 @@ bool MgbaCoreAdapter::renderFrameToWindow(ANativeWindow* window, int windowWidth
     return true;
 }
 
+void MgbaCoreAdapter::setInputMask(std::uint32_t inputMask) {
+    inputMask_ = inputMask;
+    if (core_ != nullptr && romLoaded_) {
+        core_->setKeys(core_, inputMask_);
+    }
+}
+
 void MgbaCoreAdapter::pause() {
     paused_ = true;
 }
@@ -235,6 +252,7 @@ void MgbaCoreAdapter::release() {
         core_ = nullptr;
     }
     videoBuffer_.clear();
+    inputMask_ = 0;
     romLoaded_ = false;
     paused_ = true;
 }

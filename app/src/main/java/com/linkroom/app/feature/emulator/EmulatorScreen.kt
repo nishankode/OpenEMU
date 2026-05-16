@@ -1,15 +1,23 @@
 package com.linkroom.app.feature.emulator
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,8 +31,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -134,9 +144,124 @@ fun EmulatorScreen(
                 text = "Video frames render here after a .gba loads. Placeholder rendering remains the fallback for empty or failed loads.",
                 style = MaterialTheme.typography.bodyMedium
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            GbaControlOverlay(runtime = runtime)
         }
     }
 }
+
+@Composable
+private fun GbaControlOverlay(runtime: EmulatorRuntime) {
+    var pressedButtons by remember { mutableStateOf<Set<Int>>(emptySet()) }
+
+    fun setPressed(bit: Int, pressed: Boolean) {
+        val updatedButtons = if (pressed) {
+            pressedButtons + bit
+        } else {
+            pressedButtons - bit
+        }
+        pressedButtons = updatedButtons
+        runtime.setInputMask(updatedButtons.fold(0) { mask, button -> mask or button })
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            DPad(onPressedChange = ::setPressed)
+            ShoulderAndFaceButtons(onPressedChange = ::setPressed)
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ControlButton(label = "Select", bit = INPUT_SELECT, onPressedChange = ::setPressed, wide = true)
+            Spacer(modifier = Modifier.width(16.dp))
+            ControlButton(label = "Start", bit = INPUT_START, onPressedChange = ::setPressed, wide = true)
+        }
+    }
+}
+
+@Composable
+private fun DPad(onPressedChange: (Int, Boolean) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        ControlButton(label = "Up", bit = INPUT_UP, onPressedChange = onPressedChange)
+        Row {
+            ControlButton(label = "Left", bit = INPUT_LEFT, onPressedChange = onPressedChange)
+            Spacer(modifier = Modifier.width(48.dp))
+            ControlButton(label = "Right", bit = INPUT_RIGHT, onPressedChange = onPressedChange)
+        }
+        ControlButton(label = "Down", bit = INPUT_DOWN, onPressedChange = onPressedChange)
+    }
+}
+
+@Composable
+private fun ShoulderAndFaceButtons(onPressedChange: (Int, Boolean) -> Unit) {
+    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ControlButton(label = "L", bit = INPUT_L, onPressedChange = onPressedChange)
+            ControlButton(label = "R", bit = INPUT_R, onPressedChange = onPressedChange)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            ControlButton(label = "B", bit = INPUT_B, onPressedChange = onPressedChange)
+            ControlButton(label = "A", bit = INPUT_A, onPressedChange = onPressedChange)
+        }
+    }
+}
+
+@Composable
+private fun ControlButton(
+    label: String,
+    bit: Int,
+    onPressedChange: (Int, Boolean) -> Unit,
+    wide: Boolean = false
+) {
+    Box(
+        modifier = Modifier
+            .then(if (wide) Modifier.width(84.dp).height(42.dp) else Modifier.size(52.dp))
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
+            )
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
+            )
+            .pointerInput(bit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    onPressedChange(bit, true)
+                    try {
+                        var stillPressed: Boolean
+                        do {
+                            val event = awaitPointerEvent()
+                            stillPressed = event.changes.any { it.id == down.id && it.pressed }
+                        } while (stillPressed)
+                    } finally {
+                        onPressedChange(bit, false)
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+private const val INPUT_A = 1 shl 0
+private const val INPUT_B = 1 shl 1
+private const val INPUT_SELECT = 1 shl 2
+private const val INPUT_START = 1 shl 3
+private const val INPUT_RIGHT = 1 shl 4
+private const val INPUT_LEFT = 1 shl 5
+private const val INPUT_UP = 1 shl 6
+private const val INPUT_DOWN = 1 shl 7
+private const val INPUT_R = 1 shl 8
+private const val INPUT_L = 1 shl 9
 
 @Composable
 private fun MissingRomContent(onBack: () -> Unit) {

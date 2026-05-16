@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 #include "mgba_core_adapter.h"
@@ -21,6 +22,7 @@ public:
     RomLoadResult loadRom(const std::string& romPath);
     bool runFrame();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
+    void setInputMask(std::uint32_t inputMask);
     void pause();
     void resume();
     void release();

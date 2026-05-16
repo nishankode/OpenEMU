@@ -74,6 +74,10 @@ object NativeEmulatorBridge {
         nativeRelease()
     }
 
+    fun setInputMask(inputMask: Int) = callNative("setInputMask") {
+        nativeSetInputMask(inputMask)
+    }
+
     fun getRuntimeStatus(): String {
         val failure = loadFailure
         if (failure != null) {
@@ -126,6 +130,7 @@ object NativeEmulatorBridge {
     private external fun nativeLoadRom(localRomPath: String): String
     private external fun nativePause()
     private external fun nativeResume()
+    private external fun nativeSetInputMask(inputMask: Int)
     private external fun nativeRelease()
     private external fun nativeGetRuntimeStatus(): String
     private external fun nativeGetCoreStatus(): String

@@ -40,6 +40,7 @@ public:
     RomLoadResult loadAndBootGba(const std::string& romPath);
     bool runFrame();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
+    void setInputMask(std::uint32_t inputMask);
     void pause();
     void resume();
     void release();
@@ -49,6 +50,7 @@ public:
 private:
     mCore* core_ = nullptr;
     std::vector<std::uint32_t> videoBuffer_;
+    std::uint32_t inputMask_ = 0;
     bool paused_ = true;
     bool romLoaded_ = false;
 };
