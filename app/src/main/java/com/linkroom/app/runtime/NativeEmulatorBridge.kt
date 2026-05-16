@@ -46,8 +46,20 @@ object NativeEmulatorBridge {
         nativeDetachSurface()
     }
 
-    fun loadRom(uriString: String) = callNative("loadRom") {
-        nativeLoadRom(uriString)
+    fun loadRom(localRomPath: String): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping loadRom because native library is unavailable.")
+            return "unexpected native error: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeLoadRom(localRomPath)
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: loadRom", error)
+        }.getOrElse { error ->
+            "unexpected native error: ${error.javaClass.simpleName} while loading ROM"
+        }
     }
 
     fun pause() = callNative("pause") {
@@ -95,7 +107,7 @@ object NativeEmulatorBridge {
     private external fun nativeAttachSurface(surface: Surface)
     private external fun nativeResize(width: Int, height: Int)
     private external fun nativeDetachSurface()
-    private external fun nativeLoadRom(uriString: String)
+    private external fun nativeLoadRom(localRomPath: String): String
     private external fun nativePause()
     private external fun nativeResume()
     private external fun nativeRelease()

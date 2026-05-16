@@ -1,6 +1,6 @@
 # mGBA Third-Party Source
 
-Phase 0.2B2 vendors and compiles pinned mGBA source for Android NDK integration preparation.
+Phase 0.2B3 vendors and compiles pinned mGBA source for Android NDK integration preparation and adds a native ROM boot probe for user-selected `.gba` files copied into app-private storage.
 
 ## Current Status
 
@@ -11,7 +11,9 @@ Phase 0.2B2 vendors and compiles pinned mGBA source for Android NDK integration 
 - The Android native build compiles a minimal static mGBA target named `linkroom_mgba`.
 - `linkroom_native` links against actual mGBA implementation code.
 - The app still uses the Phase 0 native placeholder renderer.
-- No real ROM boot, audio, save states, fast-forward, link cable, or online functionality is implemented.
+- User-selected `.gba` files are copied from Android SAF into app-private storage before native loading.
+- Native code can create an mGBA GBA core, load the copied ROM, reset it, and run a short boot probe.
+- No mGBA video presentation, audio, save states, battery saves, fast-forward, link cable, or online functionality is implemented.
 
 ## Source Pinning Workflow
 
@@ -40,3 +42,20 @@ Phase 0.2B2 builds mGBA through upstream CMake with `LIBMGBA_ONLY=ON`, `M_CORE_G
 This verifies the Android native toolchain can compile and link actual pinned mGBA implementation code while preserving the placeholder renderer and avoiding real emulation until the next phase.
 
 The Settings screen calls a native smoke-check that creates and releases an mGBA GBA core object, returning a status string. It does not load ROMs.
+
+## Phase 0.2B3 ROM Boot Probe
+
+The Kotlin import path copies only selected `.gba` files into app-private storage under `files/imported_roms/{rom-id}.gba`. Native code never receives raw SAF URIs.
+
+The native boot probe sequence is:
+
+1. Create an mGBA GBA core with `mCoreCreate(mPLATFORM_GBA)`.
+2. Initialize the core and config.
+3. Attach an internal video buffer so mGBA can run frames safely.
+4. Open the copied ROM path through mGBA's `VFileOpen`.
+5. Verify `core->isROM`.
+6. Load with `core->loadROM`.
+7. Reset the core and run a few frames.
+8. Return a clear status string to Kotlin.
+
+The existing placeholder `SurfaceView` renderer remains active. Real mGBA video frames are intentionally not displayed in this phase.

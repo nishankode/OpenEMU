@@ -19,7 +19,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -37,10 +40,15 @@ fun EmulatorScreen(
 ) {
     val runtime = remember { EmulatorRuntime() }
     val lifecycleOwner = LocalLifecycleOwner.current
+    var bootStatus by remember(rom?.id) {
+        mutableStateOf("Waiting for ROM load.")
+    }
 
     DisposableEffect(runtime, rom?.id) {
-        if (rom != null) {
-            runtime.loadRom(rom.uri)
+        bootStatus = when {
+            rom == null -> "No ROM selected."
+            rom.localRomPath == null -> "Native boot supports copied .gba files only in this phase. ZIP import is library-only for now."
+            else -> runtime.loadRom(rom.localRomPath)
         }
         onDispose { }
     }
@@ -113,7 +121,12 @@ fun EmulatorScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Placeholder only: the selected file is acknowledged, but real emulation is not implemented in Phase 0.",
+                text = "mGBA boot status: $bootStatus",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Placeholder renderer remains active; mGBA video frames are not displayed yet.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }

@@ -16,7 +16,7 @@ public:
     EmulatorSession(const EmulatorSession&) = delete;
     EmulatorSession& operator=(const EmulatorSession&) = delete;
 
-    bool loadRomPlaceholder(const std::string& romUri);
+    RomLoadResult loadRom(const std::string& romPath);
     void pause();
     void resume();
     void release();

@@ -5,5 +5,6 @@ import android.net.Uri
 data class RomHandle(
     val id: String,
     val uri: Uri,
-    val filename: String
+    val filename: String,
+    val localRomPath: String?
 )

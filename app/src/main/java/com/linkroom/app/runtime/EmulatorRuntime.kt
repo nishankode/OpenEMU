@@ -1,6 +1,5 @@
 package com.linkroom.app.runtime
 
-import android.net.Uri
 import android.util.Log
 import android.view.Surface
 import java.util.concurrent.atomic.AtomicBoolean
@@ -42,9 +41,11 @@ class EmulatorRuntime {
         }
     }
 
-    fun loadRom(uri: Uri) {
-        if (!released.get()) {
-            NativeEmulatorBridge.loadRom(uri.toString())
+    fun loadRom(localRomPath: String): String {
+        return if (!released.get()) {
+            NativeEmulatorBridge.loadRom(localRomPath)
+        } else {
+            "unexpected native error: emulator runtime was already released"
         }
     }
 

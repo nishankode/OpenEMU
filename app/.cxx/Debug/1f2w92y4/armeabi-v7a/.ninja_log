@@ -111,3 +111,11 @@
 7822	8124	8006457117479789	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	6c20f900f256af05
 30	734	0	mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
 30	734	0	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+26	872	0	mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+26	872	0	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+887	1010	8006464332853204	mgba/CMakeFiles/linkroom_mgba.dir/version.c.o	3008c550c2005c0c
+1011	1237	8006464334696335	mgba/liblinkroom_mgba.a	41cb160e6ccd4646
+920	3140	8006464353734849	CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o	74d4345841b14deb
+875	3149	8006464353979149	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	f7db60df25603259
+902	3243	8006464355002535	CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o	53a963280bc9fe80
+3244	3499	8006464357547497	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	6c20f900f256af05

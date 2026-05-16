@@ -13,16 +13,21 @@ EmulatorSession::~EmulatorSession() {
     release();
 }
 
-bool EmulatorSession::loadRomPlaceholder(const std::string& romUri) {
+RomLoadResult EmulatorSession::loadRom(const std::string& romPath) {
     __android_log_print(
         ANDROID_LOG_INFO,
         kTag,
-        "load ROM skeleton only: %s",
-        romUri.c_str()
+        "load ROM request: %s",
+        romPath.c_str()
     );
 
-    // TODO: Phase 0.2B should copy/open the user-selected ROM and load it through mGBA.
-    return false;
+    released_ = false;
+    paused_ = false;
+    const RomLoadResult result = coreAdapter_.loadAndBootGba(romPath);
+    if (!result.isSuccess()) {
+        paused_ = true;
+    }
+    return result;
 }
 
 void EmulatorSession::pause() {
@@ -30,6 +35,7 @@ void EmulatorSession::pause() {
         return;
     }
     paused_ = true;
+    coreAdapter_.pause();
 }
 
 void EmulatorSession::resume() {
@@ -37,6 +43,7 @@ void EmulatorSession::resume() {
         return;
     }
     paused_ = false;
+    coreAdapter_.resume();
 }
 
 void EmulatorSession::release() {
@@ -46,7 +53,7 @@ void EmulatorSession::release() {
 
     paused_ = true;
     released_ = true;
-    // TODO: Phase 0.2B should stop the emulator thread and flush battery save state.
+    coreAdapter_.release();
 }
 
 bool EmulatorSession::isReleased() const {

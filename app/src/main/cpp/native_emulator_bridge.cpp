@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 
+#include "emulator_session.h"
 #include "mgba_core_adapter.h"
 #include "placeholder_renderer.h"
 
@@ -15,6 +16,7 @@ std::mutex gMutex;
 ANativeWindow* gWindow = nullptr;
 int gWidth = 0;
 int gHeight = 0;
+linkroom::EmulatorSession gSession;
 
 void release_window_locked() {
     if (gWindow != nullptr) {
@@ -88,51 +90,62 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeDetachSurface(
     release_window_locked();
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeLoadRom(
     JNIEnv* env,
     jobject,
-    jstring uri_string
+    jstring rom_path
 ) {
-    if (uri_string == nullptr) {
-        __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM placeholder ignored: null URI");
-        return;
+    if (rom_path == nullptr) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM ignored: null private path");
+        return env->NewStringUTF("unexpected native error: missing copied ROM path");
     }
 
-    const char* chars = env->GetStringUTFChars(uri_string, nullptr);
-    std::string uri = chars != nullptr ? chars : "";
+    const char* chars = env->GetStringUTFChars(rom_path, nullptr);
+    std::string path = chars != nullptr ? chars : "";
     if (chars != nullptr) {
-        env->ReleaseStringUTFChars(uri_string, chars);
+        env->ReleaseStringUTFChars(rom_path, chars);
+    }
+
+    if (path.empty()) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM ignored: empty private path");
+        return env->NewStringUTF("file not found: copied ROM path is empty");
     }
 
     __android_log_print(
         ANDROID_LOG_INFO,
         kTag,
-        "load ROM placeholder: %s",
-        uri.c_str()
+        "load ROM from private path: %s",
+        path.c_str()
     );
 
-    // TODO: Replace this stub with emulator core ROM loading through a clean native boundary.
+    std::lock_guard<std::mutex> lock(gMutex);
+    const linkroom::RomLoadResult result = gSession.loadRom(path);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "load ROM result: %s", result.message.c_str());
+    render_locked();
+    return env->NewStringUTF(result.message.c_str());
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativePause(JNIEnv*, jobject) {
+    std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "pause runtime");
-    // TODO: Pause emulator core execution when native integration is added.
+    gSession.pause();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeResume(JNIEnv*, jobject) {
+    std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "resume runtime");
-    // TODO: Resume emulator core execution when native integration is added.
+    gSession.resume();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRelease(JNIEnv*, jobject) {
     std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "release runtime");
+    gSession.release();
     release_window_locked();
-    // TODO: Release emulator core, audio, input, and save resources.
 }
 
 extern "C" JNIEXPORT jstring JNICALL
