@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 
+#include "mgba_core_adapter.h"
 #include "placeholder_renderer.h"
 
 namespace {
@@ -132,4 +133,12 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRelease(JNIEnv*, jobjec
     __android_log_print(ANDROID_LOG_INFO, kTag, "release runtime");
     release_window_locked();
     // TODO: Release emulator core, audio, input, and save resources.
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetCoreStatus(JNIEnv* env, jobject) {
+    linkroom::MgbaCoreAdapter adapter;
+    const std::string status = adapter.linkedCoreStatus();
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", status.c_str());
+    return env->NewStringUTF(status.c_str());
 }

@@ -1,0 +1,10 @@
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\.cxx\Debug\1f2w92y4\armeabi-v7a\mgba\version.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\util\vfs\vfs-mem.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\util\vfs\vfs-fifo.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\util\vfs\vfs-fd.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\util\vfs\vfs-dirent.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\platform\posix\memory.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\third-party\inih\ini.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\third-party\blip_buf\blip_buf.c
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\.cxx\Debug\1f2w92y4\armeabi-v7a\mgba\CMakeFiles\linkroom_mgba-version-info
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\.cxx\Debug\1f2w92y4\armeabi-v7a\mgba\CMakeFiles\linkroom_mgba-version-info.rule

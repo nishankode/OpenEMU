@@ -16,6 +16,9 @@ class EmulatorRuntime {
         get() = NativeEmulatorBridge.unavailableMessage
             ?: "Native placeholder renderer active."
 
+    val coreStatusMessage: String
+        get() = NativeEmulatorBridge.getCoreStatus()
+
     fun attachSurface(surface: Surface): Boolean {
         if (released.get()) {
             Log.w(TAG, "Ignoring surface attach after runtime release.")

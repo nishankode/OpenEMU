@@ -1,6 +1,16 @@
 {
   "buildFiles": [
-    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\CMakeLists.txt"
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\arm\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\core\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\debugger\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\feature\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\gb\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\gba\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\platform\\test\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\sm83\\CMakeLists.txt",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\third_party\\mgba\\upstream\\src\\util\\CMakeLists.txt"
   ],
   "cleanCommandsComponents": [
     [
@@ -17,6 +27,17 @@
     "{LIST_OF_TARGETS_TO_BUILD}"
   ],
   "libraries": {
+    "linkroom_mgba::@86a0ee6a5eb1c0f25011": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "linkroom_mgba",
+      "output": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\.cxx\\Debug\\1f2w92y4\\arm64-v8a\\mgba\\liblinkroom_mgba.a"
+    },
+    "linkroom_mgba-version-info::@86a0ee6a5eb1c0f25011": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "linkroom_mgba-version-info"
+    },
     "linkroom_native::@6890427a1f51a3e7e1df": {
       "toolchain": "toolchain",
       "abi": "arm64-v8a",
@@ -31,7 +52,9 @@
       "cppCompilerExecutable": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
     }
   },
-  "cFileExtensions": [],
+  "cFileExtensions": [
+    "c"
+  ],
   "cppFileExtensions": [
     "cpp"
   ]

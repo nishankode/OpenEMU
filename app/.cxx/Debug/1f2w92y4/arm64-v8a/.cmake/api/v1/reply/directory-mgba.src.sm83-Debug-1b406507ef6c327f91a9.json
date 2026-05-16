@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "mgba/src/sm83",
+		"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/sm83"
+	}
+}

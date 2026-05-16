@@ -1,0 +1,233 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.6.0"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"build" : "mgba",
+					"childIndexes" : 
+					[
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-mgba-Debug-c1a04ccc9db78926cba0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				},
+				{
+					"build" : "mgba/src/debugger",
+					"jsonFile" : "directory-mgba.src.debugger-Debug-80b97c0680d28fdba73e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/debugger"
+				},
+				{
+					"build" : "mgba/src/feature",
+					"jsonFile" : "directory-mgba.src.feature-Debug-518f952a06389b97a77b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/feature"
+				},
+				{
+					"build" : "mgba/src/arm",
+					"jsonFile" : "directory-mgba.src.arm-Debug-802e5336d525491e5eac.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/arm"
+				},
+				{
+					"build" : "mgba/src/core",
+					"jsonFile" : "directory-mgba.src.core-Debug-1254e570174937ea4e5d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/core"
+				},
+				{
+					"build" : "mgba/src/gb",
+					"jsonFile" : "directory-mgba.src.gb-Debug-d7a83e67f5b5ed1853c6.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/gb"
+				},
+				{
+					"build" : "mgba/src/gba",
+					"jsonFile" : "directory-mgba.src.gba-Debug-022f90d92fb23d9f0082.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/gba"
+				},
+				{
+					"build" : "mgba/src/sm83",
+					"jsonFile" : "directory-mgba.src.sm83-Debug-1b406507ef6c327f91a9.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/sm83"
+				},
+				{
+					"build" : "mgba/src/util",
+					"jsonFile" : "directory-mgba.src.util-Debug-a73148b0a56f16a8c0a2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/util"
+				},
+				{
+					"build" : "mgba/test",
+					"jsonFile" : "directory-mgba.test-Debug-94ef0fd108125c5c251f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/platform/test"
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "linkroom_native",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10
+					],
+					"name" : "mGBA",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "linkroom_mgba::@86a0ee6a5eb1c0f25011",
+					"jsonFile" : "target-linkroom_mgba-Debug-f11d56097f4822a9e5d1.json",
+					"name" : "linkroom_mgba",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "linkroom_mgba-version-info::@86a0ee6a5eb1c0f25011",
+					"jsonFile" : "target-linkroom_mgba-version-info-Debug-6f6dc3105c3b7d09ebfc.json",
+					"name" : "linkroom_mgba-version-info",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "linkroom_native::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-linkroom_native-Debug-bfcfe45ff6798fc01adf.json",
+					"name" : "linkroom_native",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a",
+		"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

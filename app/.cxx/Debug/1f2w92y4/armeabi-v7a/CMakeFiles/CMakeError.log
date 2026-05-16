@@ -1,0 +1,87 @@
+Checking whether the ASM compiler is GNU using "--version" did not match "(GNU assembler)|(GCC)|(Free Software Foundation)":
+Android (12027248, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)
+Target: x86_64-w64-windows-gnu
+Thread model: posix
+InstalledDir: C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/bin
+Determining if the function snprintf_l exists failed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_d9a43 && [1/2] Building C object CMakeFiles/cmTC_d9a43.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_d9a43
+FAILED: cmTC_d9a43 
+cmd.exe /C "cd . && C:\Users\mnsnn\AppData\Local\Android\Sdk\ndk\27.0.12077973\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=armv7-none-linux-androideabi26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -Wall -Wextra -Wno-missing-field-initializers -Werror=implicit-function-declaration -DCHECK_FUNCTION_EXISTS=snprintf_l -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments CMakeFiles/cmTC_d9a43.dir/CheckFunctionExists.c.o -o cmTC_d9a43  -latomic -lm && cd ."
+ld.lld: error: undefined symbol: snprintf_l
+>>> referenced by CheckFunctionExists.c:17 (C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:17)
+>>>               CMakeFiles/cmTC_d9a43.dir/CheckFunctionExists.c.o:(main)
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the function popcount32 exists failed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_12d93 && [1/2] Building C object CMakeFiles/cmTC_12d93.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_12d93
+FAILED: cmTC_12d93 
+cmd.exe /C "cd . && C:\Users\mnsnn\AppData\Local\Android\Sdk\ndk\27.0.12077973\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=armv7-none-linux-androideabi26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -Wall -Wextra -Wno-missing-field-initializers -Werror=implicit-function-declaration -DCHECK_FUNCTION_EXISTS=popcount32 -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments CMakeFiles/cmTC_12d93.dir/CheckFunctionExists.c.o -o cmTC_12d93  -latomic -lm && cd ."
+ld.lld: error: undefined symbol: popcount32
+>>> referenced by CheckFunctionExists.c:17 (C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:17)
+>>>               CMakeFiles/cmTC_12d93.dir/CheckFunctionExists.c.o:(main)
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if files pthread_np.h exist failed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_e822b && [1/2] Building C object CMakeFiles/cmTC_e822b.dir/HAVE_PTHREAD_NP_H.c.o
+FAILED: CMakeFiles/cmTC_e822b.dir/HAVE_PTHREAD_NP_H.c.o 
+C:\Users\mnsnn\AppData\Local\Android\Sdk\ndk\27.0.12077973\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=armv7-none-linux-androideabi26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -Wall -Wextra -Wno-missing-field-initializers -Werror=implicit-function-declaration -pthread  -fPIE -MD -MT CMakeFiles/cmTC_e822b.dir/HAVE_PTHREAD_NP_H.c.o -MF CMakeFiles\cmTC_e822b.dir\HAVE_PTHREAD_NP_H.c.o.d -o CMakeFiles/cmTC_e822b.dir/HAVE_PTHREAD_NP_H.c.o -c C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CheckIncludeFiles/HAVE_PTHREAD_NP_H.c
+C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CheckIncludeFiles/HAVE_PTHREAD_NP_H.c:2:10: fatal error: 'pthread_np.h' file not found
+    2 | #include <pthread_np.h>
+      |          ^~~~~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+Source:
+/* */
+#include <pthread_np.h>
+
+
+int main(void){return 0;}
+
+Determining if the function pthread_set_name_np exists failed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_4b453 && [1/2] Building C object CMakeFiles/cmTC_4b453.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_4b453
+FAILED: cmTC_4b453 
+cmd.exe /C "cd . && C:\Users\mnsnn\AppData\Local\Android\Sdk\ndk\27.0.12077973\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=armv7-none-linux-androideabi26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -Wall -Wextra -Wno-missing-field-initializers -Werror=implicit-function-declaration -pthread -DCHECK_FUNCTION_EXISTS=pthread_set_name_np -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments CMakeFiles/cmTC_4b453.dir/CheckFunctionExists.c.o -o cmTC_4b453  -latomic -lm && cd ."
+ld.lld: error: undefined symbol: pthread_set_name_np
+>>> referenced by CheckFunctionExists.c:17 (C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:17)
+>>>               CMakeFiles/cmTC_4b453.dir/CheckFunctionExists.c.o:(main)
+>>> did you mean: pthread_setname_np
+>>> defined in: C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/libc.so
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the function crc32 exists failed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_0cb6f && [1/2] Building C object CMakeFiles/cmTC_0cb6f.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_0cb6f
+FAILED: cmTC_0cb6f 
+cmd.exe /C "cd . && C:\Users\mnsnn\AppData\Local\Android\Sdk\ndk\27.0.12077973\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=armv7-none-linux-androideabi26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -Wall -Wextra -Wno-missing-field-initializers -Werror=implicit-function-declaration -pthread -DCHECK_FUNCTION_EXISTS=crc32 -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments CMakeFiles/cmTC_0cb6f.dir/CheckFunctionExists.c.o -o cmTC_0cb6f  -latomic -lm && cd ."
+ld.lld: error: undefined symbol: crc32
+>>> referenced by CheckFunctionExists.c:17 (C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:17)
+>>>               CMakeFiles/cmTC_0cb6f.dir/CheckFunctionExists.c.o:(main)
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+ninja: build stopped: subcommand failed.
+
+
+

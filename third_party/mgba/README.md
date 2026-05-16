@@ -1,6 +1,6 @@
 # mGBA Third-Party Source
 
-Phase 0.2B1 vendors pinned mGBA source for Android NDK integration preparation.
+Phase 0.2B2 vendors and compiles pinned mGBA source for Android NDK integration preparation.
 
 ## Current Status
 
@@ -8,7 +8,8 @@ Phase 0.2B1 vendors pinned mGBA source for Android NDK integration preparation.
 - Pinned upstream tag: `0.10.5`.
 - Pinned upstream commit: `26b7884bc25a5933960f3cdcd98bac1ae14d42e2`.
 - Upstream URL: `https://github.com/mgba-emu/mgba`.
-- The Android native build currently performs header verification only through a minimal CMake `mgba_headers` interface target.
+- The Android native build compiles a minimal static mGBA target named `linkroom_mgba`.
+- `linkroom_native` links against actual mGBA implementation code.
 - The app still uses the Phase 0 native placeholder renderer.
 - No real ROM boot, audio, save states, fast-forward, link cable, or online functionality is implemented.
 
@@ -32,8 +33,10 @@ The nested `.git` directory was removed after recording the exact tag and commit
 - Keep mGBA behind the native wrapper boundary. Kotlin and Compose code should not depend on mGBA APIs directly.
 - Review license obligations before distributing any APK that includes mGBA.
 
-## Phase 0.2B1 Build Integration
+## Phase 0.2B2 Build Integration
 
-Phase 0.2B1 intentionally does not build the full mGBA core. It adds a minimal CMake interface target named `mgba_headers`, points it at `third_party/mgba/upstream/include`, and compiles LinkRoom wrapper code against mGBA headers.
+Phase 0.2B2 builds mGBA through upstream CMake with `LIBMGBA_ONLY=ON`, `M_CORE_GBA=ON`, `M_CORE_GB=OFF`, `MINIMAL_CORE=2`, `ENABLE_EXTRA=ON`, and dependency/frontends disabled.
 
-This verifies the Android native toolchain can consume the pinned upstream headers while preserving the placeholder renderer and avoiding real emulation until the next phase.
+This verifies the Android native toolchain can compile and link actual pinned mGBA implementation code while preserving the placeholder renderer and avoiding real emulation until the next phase.
+
+The Settings screen calls a native smoke-check that creates and releases an mGBA GBA core object, returning a status string. It does not load ROMs.

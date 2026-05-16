@@ -14,6 +14,7 @@ public:
 
     bool isCoreAvailable() const;
     std::string statusMessage() const;
+    std::string linkedCoreStatus() const;
 };
 
 } // namespace linkroom

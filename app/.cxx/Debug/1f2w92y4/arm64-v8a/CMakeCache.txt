@@ -26,6 +26,38 @@ ANDROID_PLATFORM:UNINITIALIZED=android-26
 //No help, variable specified on the command line.
 ANDROID_STL:UNINITIALIZED=c++_shared
 
+BINARY_NAME:STRING=linkroom_mgba
+
+BUILD_CINEMA:BOOL=OFF
+
+BUILD_EXAMPLE:BOOL=OFF
+
+BUILD_GL:BOOL=OFF
+
+BUILD_GLES2:BOOL=OFF
+
+BUILD_GLES3:BOOL=OFF
+
+BUILD_LIBRETRO:BOOL=OFF
+
+BUILD_PERF:BOOL=OFF
+
+BUILD_PYTHON:BOOL=OFF
+
+BUILD_QT:BOOL=OFF
+
+BUILD_ROM_TEST:BOOL=OFF
+
+BUILD_SDL:BOOL=OFF
+
+BUILD_SHARED:BOOL=OFF
+
+BUILD_STATIC:BOOL=ON
+
+BUILD_SUITE:BOOL=OFF
+
+BUILD_TEST:BOOL=OFF
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-addr2line.exe
 
@@ -120,8 +152,56 @@ CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 //No help, variable specified on the command line.
 CMAKE_EXPORT_COMPILE_COMMANDS:UNINITIALIZED=ON
 
+//User executables (bin)
+CMAKE_INSTALL_BINDIR:PATH=bin
+
+//Read-only architecture-independent data (DATAROOTDIR)
+CMAKE_INSTALL_DATADIR:PATH=
+
+//Read-only architecture-independent data root (share)
+CMAKE_INSTALL_DATAROOTDIR:PATH=share
+
+//Documentation root (DATAROOTDIR/doc/PROJECT_NAME)
+CMAKE_INSTALL_DOCDIR:PATH=
+
+//C header files (include)
+CMAKE_INSTALL_INCLUDEDIR:PATH=include
+
+//Info documentation (DATAROOTDIR/info)
+CMAKE_INSTALL_INFODIR:PATH=
+
+//Object code libraries (lib)
+CMAKE_INSTALL_LIBDIR:PATH=lib
+
+//Program executables (libexec)
+CMAKE_INSTALL_LIBEXECDIR:PATH=libexec
+
+//Locale-dependent data (DATAROOTDIR/locale)
+CMAKE_INSTALL_LOCALEDIR:PATH=
+
+//Modifiable single-machine data (var)
+CMAKE_INSTALL_LOCALSTATEDIR:PATH=var
+
+//Man documentation (DATAROOTDIR/man)
+CMAKE_INSTALL_MANDIR:PATH=
+
+//C header files for non-gcc (/usr/include)
+CMAKE_INSTALL_OLDINCLUDEDIR:PATH=/usr/include
+
 //Install path prefix, prepended onto install directories.
 CMAKE_INSTALL_PREFIX:PATH=C:/Program Files (x86)/linkroom_native
+
+//Run-time variable data (LOCALSTATEDIR/run)
+CMAKE_INSTALL_RUNSTATEDIR:PATH=
+
+//System admin executables (sbin)
+CMAKE_INSTALL_SBINDIR:PATH=sbin
+
+//Modifiable architecture-independent data (com)
+CMAKE_INSTALL_SHAREDSTATEDIR:PATH=com
+
+//Read-only single-machine data (etc)
+CMAKE_INSTALL_SYSCONFDIR:PATH=etc
 
 //No help, variable specified on the command line.
 CMAKE_LIBRARY_OUTPUT_DIRECTORY:UNINITIALIZED=C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\build\intermediates\cxx\Debug\1f2w92y4\obj\arm64-v8a
@@ -242,8 +322,124 @@ CMAKE_TOOLCHAIN_FILE:UNINITIALIZED=C:\Users\mnsnn\AppData\Local\Android\Sdk\ndk\
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//Enable to build Debian packages
+CPACK_BINARY_DEB:BOOL=OFF
+
+//Enable to build FreeBSD packages
+CPACK_BINARY_FREEBSD:BOOL=OFF
+
+//Enable to build IFW packages
+CPACK_BINARY_IFW:BOOL=OFF
+
+//Enable to build NSIS packages
+CPACK_BINARY_NSIS:BOOL=OFF
+
+//Enable to build RPM packages
+CPACK_BINARY_RPM:BOOL=OFF
+
+//Enable to build STGZ packages
+CPACK_BINARY_STGZ:BOOL=ON
+
+//Enable to build TBZ2 packages
+CPACK_BINARY_TBZ2:BOOL=OFF
+
+//Enable to build TGZ packages
+CPACK_BINARY_TGZ:BOOL=ON
+
+//Enable to build TXZ packages
+CPACK_BINARY_TXZ:BOOL=OFF
+
+//Enable to build TZ packages
+CPACK_BINARY_TZ:BOOL=ON
+
+//Enable to build RPM source packages
+CPACK_SOURCE_RPM:BOOL=OFF
+
+//Enable to build TBZ2 source packages
+CPACK_SOURCE_TBZ2:BOOL=ON
+
+//Enable to build TGZ source packages
+CPACK_SOURCE_TGZ:BOOL=ON
+
+//Enable to build TXZ source packages
+CPACK_SOURCE_TXZ:BOOL=ON
+
+//Enable to build TZ source packages
+CPACK_SOURCE_TZ:BOOL=ON
+
+//Enable to build ZIP source packages
+CPACK_SOURCE_ZIP:BOOL=OFF
+
+DISABLE_DEPS:BOOL=ON
+
+DISABLE_FRONTENDS:BOOL=ON
+
+ENABLE_EXTRA:BOOL=ON
+
+ENABLE_SCRIPTING:BOOL=OFF
+
+//Path to a program.
+GIT:FILEPATH=C:/Program Files/Git/cmd/git.exe
+
+LIBMGBA_ONLY:BOOL=ON
+
+//Path to a program.
+MARKDOWN:FILEPATH=MARKDOWN-NOTFOUND
+
+MINIMAL_CORE:STRING=2
+
+M_CORE_GB:BOOL=OFF
+
+M_CORE_GBA:BOOL=ON
+
+//Path to a program.
+OBJCOPY:FILEPATH=OBJCOPY-NOTFOUND
+
+//Arguments to supply to pkg-config
+PKG_CONFIG_ARGN:STRING=
+
+//pkg-config executable
+PKG_CONFIG_EXECUTABLE:FILEPATH=PKG_CONFIG_EXECUTABLE-NOTFOUND
+
+//Path to a program.
+STRIP:FILEPATH=STRIP-NOTFOUND
+
+//Path to a program.
+UNIX2DOS:FILEPATH=C:/Program Files/Git/usr/bin/unix2dos.exe
+
+USE_DEBUGGERS:BOOL=OFF
+
+USE_DISCORD_RPC:BOOL=OFF
+
+USE_EDITLINE:BOOL=OFF
+
+USE_ELF:BOOL=OFF
+
+USE_FFMPEG:BOOL=OFF
+
+USE_GDB_STUB:BOOL=OFF
+
+USE_LIBZIP:BOOL=OFF
+
+USE_LUA:BOOL=OFF
+
+USE_LZMA:BOOL=OFF
+
+USE_MINIZIP:BOOL=OFF
+
+USE_PNG:BOOL=OFF
+
+USE_SQLITE3:BOOL=OFF
+
+USE_ZLIB:BOOL=OFF
+
+VERSION_STRING_CACHE:STRING=0.10-main-2-244acec-dirty
+
 //Path to a library.
 android-lib:FILEPATH=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/26/libandroid.so
+
+//Dependencies for the target
+linkroom_mgba_LIB_DEPENDS:STATIC=general;m;
 
 //Value Computed by CMake
 linkroom_native_BINARY_DIR:STATIC=C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a
@@ -256,6 +452,15 @@ linkroom_native_SOURCE_DIR:STATIC=C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/m
 
 //Path to a library.
 log-lib:FILEPATH=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/26/liblog.so
+
+//Value Computed by CMake
+mGBA_BINARY_DIR:STATIC=C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/mgba
+
+//Value Computed by CMake
+mGBA_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+mGBA_SOURCE_DIR:STATIC=C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream
 
 
 ########################
@@ -339,8 +544,40 @@ CMAKE_GENERATOR_TOOLSET:INTERNAL=
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp
+//ADVANCED property for variable: CMAKE_INSTALL_BINDIR
+CMAKE_INSTALL_BINDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_DATADIR
+CMAKE_INSTALL_DATADIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_DATAROOTDIR
+CMAKE_INSTALL_DATAROOTDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_DOCDIR
+CMAKE_INSTALL_DOCDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_INCLUDEDIR
+CMAKE_INSTALL_INCLUDEDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_INFODIR
+CMAKE_INSTALL_INFODIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_LIBDIR
+CMAKE_INSTALL_LIBDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_LIBEXECDIR
+CMAKE_INSTALL_LIBEXECDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_LOCALEDIR
+CMAKE_INSTALL_LOCALEDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_LOCALSTATEDIR
+CMAKE_INSTALL_LOCALSTATEDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_MANDIR
+CMAKE_INSTALL_MANDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_OLDINCLUDEDIR
+CMAKE_INSTALL_OLDINCLUDEDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_RUNSTATEDIR
+CMAKE_INSTALL_RUNSTATEDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_SBINDIR
+CMAKE_INSTALL_SBINDIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_INSTALL_SHAREDSTATEDIR
+CMAKE_INSTALL_SHAREDSTATEDIR-ADVANCED:INTERNAL=1
 //Install .so files without execute permission.
 CMAKE_INSTALL_SO_NO_EXE:INTERNAL=0
+//ADVANCED property for variable: CMAKE_INSTALL_SYSCONFDIR
+CMAKE_INSTALL_SYSCONFDIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_LINKER
 CMAKE_LINKER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS
@@ -356,7 +593,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=1
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=11
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -397,4 +634,84 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 CMAKE_STRIP-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_DEB
+CPACK_BINARY_DEB-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_FREEBSD
+CPACK_BINARY_FREEBSD-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_IFW
+CPACK_BINARY_IFW-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_NSIS
+CPACK_BINARY_NSIS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_RPM
+CPACK_BINARY_RPM-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_STGZ
+CPACK_BINARY_STGZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_TBZ2
+CPACK_BINARY_TBZ2-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_TGZ
+CPACK_BINARY_TGZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_TXZ
+CPACK_BINARY_TXZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_BINARY_TZ
+CPACK_BINARY_TZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_SOURCE_RPM
+CPACK_SOURCE_RPM-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_SOURCE_TBZ2
+CPACK_SOURCE_TBZ2-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_SOURCE_TGZ
+CPACK_SOURCE_TGZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_SOURCE_TXZ
+CPACK_SOURCE_TXZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_SOURCE_TZ
+CPACK_SOURCE_TZ-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CPACK_SOURCE_ZIP
+CPACK_SOURCE_ZIP-ADVANCED:INTERNAL=1
+//Have function crc32
+HAVE_CRC32:INTERNAL=
+//Have function freelocale
+HAVE_FREELOCALE:INTERNAL=1
+//Have function futimens
+HAVE_FUTIMENS:INTERNAL=1
+//Have function futimes
+HAVE_FUTIMES:INTERNAL=1
+//Have function localtime_r
+HAVE_LOCALTIME_R:INTERNAL=1
+//Have function newlocale
+HAVE_NEWLOCALE:INTERNAL=1
+//Have function popcount32
+HAVE_POPCOUNT32:INTERNAL=
+//Test HAVE_PTHREAD
+HAVE_PTHREAD:INTERNAL=1
+//Have function pthread_create
+HAVE_PTHREAD_CREATE:INTERNAL=1
+//Have include pthread.h
+HAVE_PTHREAD_H:INTERNAL=1
+//Have includes pthread_np.h
+HAVE_PTHREAD_NP_H:INTERNAL=
+//Have function pthread_setname_np
+HAVE_PTHREAD_SETNAME_NP:INTERNAL=1
+//Have function pthread_set_name_np
+HAVE_PTHREAD_SET_NAME_NP:INTERNAL=
+//Have function setlocale
+HAVE_SETLOCALE:INTERNAL=1
+//Have function snprintf_l
+HAVE_SNPRINTF_L:INTERNAL=
+//Have function strdup
+HAVE_STRDUP:INTERNAL=1
+//Have function strlcpy
+HAVE_STRLCPY:INTERNAL=1
+//Have function strndup
+HAVE_STRNDUP:INTERNAL=1
+//Have function uselocale
+HAVE_USELOCALE:INTERNAL=1
+//Have function vasprintf
+HAVE_VASPRINTF:INTERNAL=1
+//Have include xlocale.h
+HAVE_XLOCALE:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_ARGN
+PKG_CONFIG_ARGN-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
+PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
+//CMAKE_INSTALL_PREFIX during last run
+_GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=C:/Program Files (x86)/linkroom_native
 

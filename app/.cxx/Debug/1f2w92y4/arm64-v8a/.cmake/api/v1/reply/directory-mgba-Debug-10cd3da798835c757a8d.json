@@ -1,0 +1,332 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 926,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 931,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 932,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 933,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 934,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 935,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 937,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 938,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 939,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1048,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1049,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1050,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1053,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1054,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1073,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1075,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"mgba/liblinkroom_mgba.a"
+			],
+			"targetId" : "linkroom_mgba::@86a0ee6a5eb1c0f25011",
+			"targetIndex" : 0,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/16x16/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-16.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/24x24/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-24.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/32x32/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-32.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 5,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/48x48/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-48.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 6,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/64x64/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-64.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/96x96/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-96.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 8,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/128x128/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-128.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 9,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/256x256/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-256.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 10,
+			"component" : "linkroom_mgba",
+			"destination" : "share/icons/hicolor/512x512/apps",
+			"paths" : 
+			[
+				{
+					"from" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/mgba-512.png",
+					"to" : "io.mgba.mGBA.png"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 11,
+			"component" : "linkroom_mgba-dev",
+			"destination" : "include",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/include/mgba"
+			],
+			"type" : "directory"
+		},
+		{
+			"backtrace" : 12,
+			"component" : "linkroom_mgba-dev",
+			"destination" : "include",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/include/mgba-util"
+			],
+			"type" : "directory"
+		},
+		{
+			"backtrace" : 13,
+			"component" : "linkroom_mgba-dev",
+			"destination" : "include/mgba",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/mgba/include/mgba/flags.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 14,
+			"component" : "linkroom_mgba",
+			"destination" : "share/doc/mGBA/licenses",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/licenses/blip_buf.txt"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 15,
+			"component" : "linkroom_mgba",
+			"destination" : "share/doc/mGBA/licenses",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/res/licenses/inih.txt"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 16,
+			"component" : "linkroom_mgba",
+			"destination" : "share/doc/mGBA",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/README.md",
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/README_DE.md",
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/README_ES.md",
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/README_ZH_CN.md"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 17,
+			"component" : "linkroom_mgba",
+			"destination" : "share/doc/mGBA",
+			"paths" : 
+			[
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/CHANGES",
+				"C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/LICENSE"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "mgba",
+		"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream"
+	}
+}

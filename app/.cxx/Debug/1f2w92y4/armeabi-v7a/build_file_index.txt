@@ -1,1 +1,11 @@
 C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\src\main\cpp\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\arm\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\core\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\debugger\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\feature\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\gb\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\gba\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\platform\test\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\sm83\CMakeLists.txt
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\third_party\mgba\upstream\src\util\CMakeLists.txt

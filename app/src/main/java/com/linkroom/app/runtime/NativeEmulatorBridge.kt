@@ -62,6 +62,22 @@ object NativeEmulatorBridge {
         nativeRelease()
     }
 
+    fun getCoreStatus(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping getCoreStatus because native library is unavailable.")
+            return "mGBA core linked: unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeGetCoreStatus()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: getCoreStatus", error)
+        }.getOrElse { error ->
+            "mGBA core linked: error (${error.javaClass.simpleName})"
+        }
+    }
+
     private inline fun callNative(operation: String, block: () -> Unit): Boolean {
         val failure = loadFailure
         if (failure != null) {
@@ -83,4 +99,5 @@ object NativeEmulatorBridge {
     private external fun nativePause()
     private external fun nativeResume()
     private external fun nativeRelease()
+    private external fun nativeGetCoreStatus(): String
 }

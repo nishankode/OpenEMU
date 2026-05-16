@@ -268,3 +268,169 @@ Parsed CXX implicit link information from above output:
   implicit fwks: []
 
 
+Determining if the function strdup exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_b33b9 && [1/2] Building C object CMakeFiles/cmTC_b33b9.dir/CheckFunctionExists.c.o
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: warning: incompatible redeclaration of library function 'strdup' [-Wincompatible-library-redeclaration]
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^
+<command line>:3:31: note: expanded from macro 'CHECK_FUNCTION_EXISTS'
+    3 | #define CHECK_FUNCTION_EXISTS strdup
+      |                               ^
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: 'strdup' is a builtin with type 'char *(const char *)'
+<command line>:3:31: note: expanded from macro 'CHECK_FUNCTION_EXISTS'
+    3 | #define CHECK_FUNCTION_EXISTS strdup
+      |                               ^
+1 warning generated.
+[2/2] Linking C executable cmTC_b33b9
+
+
+
+Determining if the function strlcpy exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_204b0 && [1/2] Building C object CMakeFiles/cmTC_204b0.dir/CheckFunctionExists.c.o
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: warning: incompatible redeclaration of library function 'strlcpy' [-Wincompatible-library-redeclaration]
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^
+<command line>:3:31: note: expanded from macro 'CHECK_FUNCTION_EXISTS'
+    3 | #define CHECK_FUNCTION_EXISTS strlcpy
+      |                               ^
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: 'strlcpy' is a builtin with type 'unsigned long (char *, const char *, unsigned long)'
+<command line>:3:31: note: expanded from macro 'CHECK_FUNCTION_EXISTS'
+    3 | #define CHECK_FUNCTION_EXISTS strlcpy
+      |                               ^
+1 warning generated.
+[2/2] Linking C executable cmTC_204b0
+
+
+
+Determining if the function strndup exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_35767 && [1/2] Building C object CMakeFiles/cmTC_35767.dir/CheckFunctionExists.c.o
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: warning: incompatible redeclaration of library function 'strndup' [-Wincompatible-library-redeclaration]
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^
+<command line>:3:31: note: expanded from macro 'CHECK_FUNCTION_EXISTS'
+    3 | #define CHECK_FUNCTION_EXISTS strndup
+      |                               ^
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: 'strndup' is a builtin with type 'char *(const char *, unsigned long)'
+<command line>:3:31: note: expanded from macro 'CHECK_FUNCTION_EXISTS'
+    3 | #define CHECK_FUNCTION_EXISTS strndup
+      |                               ^
+1 warning generated.
+[2/2] Linking C executable cmTC_35767
+
+
+
+Determining if the function vasprintf exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_bd2aa && [1/2] Building C object CMakeFiles/cmTC_bd2aa.dir/CheckFunctionExists.c.o
+C:/Users/mnsnn/AppData/Local/Android/Sdk/cmake/3.22.1/share/cmake-3.22/Modules/CheckFunctionExists.c:17:25: warning: format string missing [-Wformat]
+   17 |   CHECK_FUNCTION_EXISTS();
+      |   ~~~~~~~~~~~~~~~~~~~~~ ^
+1 warning generated.
+[2/2] Linking C executable cmTC_bd2aa
+
+
+
+Determining if the function freelocale exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_9eac5 && [1/2] Building C object CMakeFiles/cmTC_9eac5.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_9eac5
+
+
+
+Determining if the function newlocale exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_31c99 && [1/2] Building C object CMakeFiles/cmTC_31c99.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_31c99
+
+
+
+Determining if the function setlocale exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_7c1eb && [1/2] Building C object CMakeFiles/cmTC_7c1eb.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_7c1eb
+
+
+
+Determining if the function uselocale exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_2ec9b && [1/2] Building C object CMakeFiles/cmTC_2ec9b.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_2ec9b
+
+
+
+Determining if the function futimens exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_f55b5 && [1/2] Building C object CMakeFiles/cmTC_f55b5.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_f55b5
+
+
+
+Determining if the function futimes exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_73e34 && [1/2] Building C object CMakeFiles/cmTC_73e34.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_73e34
+
+
+
+Determining if the function localtime_r exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_0d2fb && [1/2] Building C object CMakeFiles/cmTC_0d2fb.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_0d2fb
+
+
+
+Determining if files xlocale.h exist passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_e4603 && [1/2] Building C object CMakeFiles/cmTC_e4603.dir/HAVE_XLOCALE.c.o
+[2/2] Linking C executable cmTC_e4603
+
+
+
+Determining if files pthread.h exist passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_2d01f && [1/2] Building C object CMakeFiles/cmTC_2d01f.dir/HAVE_PTHREAD_H.c.o
+[2/2] Linking C executable cmTC_2d01f
+
+
+
+Performing C SOURCE FILE Test HAVE_PTHREAD succeeded with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_c3a7d && [1/2] Building C object CMakeFiles/cmTC_c3a7d.dir/src.c.o
+[2/2] Linking C executable cmTC_c3a7d
+
+
+Source file was:
+int main(void) { return 0; }
+Determining if the function pthread_create exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_13dea && [1/2] Building C object CMakeFiles/cmTC_13dea.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_13dea
+
+
+
+Determining if the function pthread_setname_np exists passed with the following output:
+Change Dir: C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:\Users\mnsnn\AppData\Local\Android\Sdk\cmake\3.22.1\bin\ninja.exe cmTC_7f918 && [1/2] Building C object CMakeFiles/cmTC_7f918.dir/CheckFunctionExists.c.o
+[2/2] Linking C executable cmTC_7f918
+
+
+

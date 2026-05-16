@@ -4,11 +4,52 @@ project(linkroom_native)
 
 set(MGBA_UPSTREAM_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../../third_party/mgba/upstream")
 
-add_library(mgba_headers INTERFACE)
-target_include_directories(
-    mgba_headers
-    INTERFACE
-    "${MGBA_UPSTREAM_DIR}/include"
+# Phase 0.2B2 mGBA build:
+# Build a minimal static mGBA library from the pinned upstream source. This
+# links actual mGBA implementation code into linkroom_native, but runtime still
+# uses the existing placeholder renderer and does not boot ROMs.
+set(LIBMGBA_ONLY ON CACHE BOOL "" FORCE)
+set(BINARY_NAME linkroom_mgba CACHE STRING "" FORCE)
+set(M_CORE_GBA ON CACHE BOOL "" FORCE)
+set(M_CORE_GB OFF CACHE BOOL "" FORCE)
+set(MINIMAL_CORE 2 CACHE STRING "" FORCE)
+set(ENABLE_EXTRA ON CACHE BOOL "" FORCE)
+set(DISABLE_DEPS ON CACHE BOOL "" FORCE)
+set(DISABLE_FRONTENDS ON CACHE BOOL "" FORCE)
+set(BUILD_STATIC ON CACHE BOOL "" FORCE)
+set(BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(BUILD_QT OFF CACHE BOOL "" FORCE)
+set(BUILD_SDL OFF CACHE BOOL "" FORCE)
+set(BUILD_LIBRETRO OFF CACHE BOOL "" FORCE)
+set(BUILD_PERF OFF CACHE BOOL "" FORCE)
+set(BUILD_TEST OFF CACHE BOOL "" FORCE)
+set(BUILD_SUITE OFF CACHE BOOL "" FORCE)
+set(BUILD_CINEMA OFF CACHE BOOL "" FORCE)
+set(BUILD_ROM_TEST OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(BUILD_PYTHON OFF CACHE BOOL "" FORCE)
+set(BUILD_GL OFF CACHE BOOL "" FORCE)
+set(BUILD_GLES2 OFF CACHE BOOL "" FORCE)
+set(BUILD_GLES3 OFF CACHE BOOL "" FORCE)
+set(USE_DEBUGGERS OFF CACHE BOOL "" FORCE)
+set(USE_GDB_STUB OFF CACHE BOOL "" FORCE)
+set(USE_EDITLINE OFF CACHE BOOL "" FORCE)
+set(USE_FFMPEG OFF CACHE BOOL "" FORCE)
+set(USE_ZLIB OFF CACHE BOOL "" FORCE)
+set(USE_MINIZIP OFF CACHE BOOL "" FORCE)
+set(USE_PNG OFF CACHE BOOL "" FORCE)
+set(USE_LIBZIP OFF CACHE BOOL "" FORCE)
+set(USE_SQLITE3 OFF CACHE BOOL "" FORCE)
+set(USE_ELF OFF CACHE BOOL "" FORCE)
+set(USE_LUA OFF CACHE BOOL "" FORCE)
+set(USE_LZMA OFF CACHE BOOL "" FORCE)
+set(USE_DISCORD_RPC OFF CACHE BOOL "" FORCE)
+set(ENABLE_SCRIPTING OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(
+    "${MGBA_UPSTREAM_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}/mgba"
+    EXCLUDE_FROM_ALL
 )
 
 add_library(
@@ -28,21 +69,12 @@ target_include_directories(
     linkroom_core
 )
 
-# Phase 0.2B1 mGBA hook:
-# The build currently links the mGBA header interface target only. This verifies
-# the Android native toolchain can consume pinned mGBA headers without replacing
-# the placeholder renderer or attempting real ROM boot.
-#
-# Future phase:
-# Replace or extend mgba_headers with a minimal compiled mGBA core target used
-# only by linkroom_core/mgba_core_adapter.
-
 find_library(log-lib log)
 find_library(android-lib android)
 
 target_link_libraries(
     linkroom_native
-    mgba_headers
+    linkroom_mgba
     ${log-lib}
     ${android-lib}
 )
