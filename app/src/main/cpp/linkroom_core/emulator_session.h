@@ -19,10 +19,11 @@ public:
     EmulatorSession(const EmulatorSession&) = delete;
     EmulatorSession& operator=(const EmulatorSession&) = delete;
 
-    RomLoadResult loadRom(const std::string& romPath);
+    RomLoadResult loadRom(const std::string& romPath, const std::string& gameRootPath);
     bool runFrame();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     void setInputMask(std::uint32_t inputMask);
+    std::string flushBatterySave();
     void pause();
     void resume();
     void release();
@@ -31,6 +32,7 @@ public:
     bool hasLoadedRom() const;
     bool isPaused() const;
     std::string statusMessage() const;
+    std::string saveStatus() const;
 
 private:
     MgbaCoreAdapter coreAdapter_;

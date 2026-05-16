@@ -35,12 +35,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.linkroom.app.feature.library.RomHandle
 import com.linkroom.app.runtime.EmulatorRuntime
+import android.util.Log
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,8 +53,12 @@ fun EmulatorScreen(
 ) {
     val runtime = remember { EmulatorRuntime() }
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
     var bootStatus by remember(rom?.id) {
         mutableStateOf("loading: waiting for ROM load")
+    }
+    var saveStatus by remember(rom?.id) {
+        mutableStateOf("save: waiting for ROM load")
     }
 
     DisposableEffect(runtime, rom?.id) {
@@ -60,8 +67,18 @@ fun EmulatorScreen(
             rom == null -> "No ROM selected."
             !rom.isAvailable -> "failed: copied ROM file is missing from private app storage"
             rom.localRomPath == null -> "Native boot supports copied .gba files only in this phase. ZIP import is library-only for now."
-            else -> runtime.loadRom(rom.localRomPath)
+            rom.gameRootPath == null -> "failed: save directory is unavailable for this ROM"
+            else -> {
+                val batteryDirectory = File(rom.gameRootPath, "battery")
+                val batterySaveFile = File(batteryDirectory, "current.sav")
+                Log.i(
+                    TAG,
+                    "Opening ROM id=${rom.id}; name=${rom.filename}; privatePath=${rom.localRomPath}; appFilesDir=${context.filesDir.absolutePath}; expectedSaveDir=${batteryDirectory.absolutePath}; expectedSaveFile=${batterySaveFile.absolutePath}; saveExistsBeforeBoot=${batterySaveFile.exists()}; saveSizeBeforeBoot=${batterySaveFile.length()}"
+                )
+                runtime.loadRom(rom.localRomPath, rom.gameRootPath)
+            }
         }
+        saveStatus = runtime.saveStatusMessage
         onDispose { }
     }
 
@@ -75,10 +92,14 @@ fun EmulatorScreen(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> bootStatus = runtime.resume()
-                Lifecycle.Event.ON_PAUSE -> bootStatus = runtime.pause()
+                Lifecycle.Event.ON_PAUSE -> {
+                    bootStatus = runtime.pause()
+                    saveStatus = runtime.saveStatusMessage
+                }
                 Lifecycle.Event.ON_DESTROY -> {
                     runtime.release()
                     bootStatus = "released: emulator runtime resources released"
+                    saveStatus = runtime.saveStatusMessage
                 }
                 else -> Unit
             }
@@ -137,6 +158,11 @@ fun EmulatorScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "mGBA runtime status: $bootStatus",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Battery save status: $saveStatus",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -262,6 +288,7 @@ private const val INPUT_UP = 1 shl 6
 private const val INPUT_DOWN = 1 shl 7
 private const val INPUT_R = 1 shl 8
 private const val INPUT_L = 1 shl 9
+private const val TAG = "EmulatorScreen"
 
 @Composable
 private fun MissingRomContent(onBack: () -> Unit) {

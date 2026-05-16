@@ -158,11 +158,16 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeLoadRom(
     JNIEnv* env,
     jobject,
-    jstring rom_path
+    jstring rom_path,
+    jstring game_root_path
 ) {
     if (rom_path == nullptr) {
         __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM ignored: null private path");
         return env->NewStringUTF("unexpected native error: missing copied ROM path");
+    }
+    if (game_root_path == nullptr) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM ignored: null game root path");
+        return env->NewStringUTF("unexpected native error: missing game save path");
     }
 
     const char* chars = env->GetStringUTFChars(rom_path, nullptr);
@@ -170,10 +175,19 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeLoadRom(
     if (chars != nullptr) {
         env->ReleaseStringUTFChars(rom_path, chars);
     }
+    const char* gameRootChars = env->GetStringUTFChars(game_root_path, nullptr);
+    std::string gameRootPath = gameRootChars != nullptr ? gameRootChars : "";
+    if (gameRootChars != nullptr) {
+        env->ReleaseStringUTFChars(game_root_path, gameRootChars);
+    }
 
     if (path.empty()) {
         __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM ignored: empty private path");
         return env->NewStringUTF("file not found: copied ROM path is empty");
+    }
+    if (gameRootPath.empty()) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "load ROM ignored: empty game root path");
+        return env->NewStringUTF("unexpected native error: game save path is empty");
     }
 
     __android_log_print(
@@ -188,7 +202,7 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeLoadRom(
     linkroom::RomLoadResult result;
     {
         std::lock_guard<std::mutex> lock(gMutex);
-        result = gSession.loadRom(path);
+        result = gSession.loadRom(path, gameRootPath);
         __android_log_print(ANDROID_LOG_INFO, kTag, "load ROM result: %s", result.message.c_str());
         render_locked();
     }
@@ -204,6 +218,7 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativePause(JNIEnv*, jobject)
     std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "pause runtime");
     gSession.pause();
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", gSession.saveStatus().c_str());
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -231,6 +246,13 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRelease(JNIEnv*, jobjec
     __android_log_print(ANDROID_LOG_INFO, kTag, "release runtime");
     gSession.release();
     release_window_locked();
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetSaveStatus(JNIEnv* env, jobject) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    const std::string status = gSession.saveStatus();
+    return env->NewStringUTF(status.c_str());
 }
 
 extern "C" JNIEXPORT jstring JNICALL

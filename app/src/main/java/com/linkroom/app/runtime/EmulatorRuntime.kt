@@ -2,6 +2,7 @@ package com.linkroom.app.runtime
 
 import android.util.Log
 import android.view.Surface
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 class EmulatorRuntime {
@@ -20,6 +21,9 @@ class EmulatorRuntime {
 
     val runtimeStatusMessage: String
         get() = NativeEmulatorBridge.getRuntimeStatus()
+
+    val saveStatusMessage: String
+        get() = NativeEmulatorBridge.getSaveStatus()
 
     fun attachSurface(surface: Surface): Boolean {
         if (released.get()) {
@@ -44,9 +48,14 @@ class EmulatorRuntime {
         }
     }
 
-    fun loadRom(localRomPath: String): String {
+    fun loadRom(localRomPath: String, gameRootPath: String): String {
         return if (!released.get()) {
-            NativeEmulatorBridge.loadRom(localRomPath)
+            val batteryDirectory = File(gameRootPath, "battery")
+            val batterySaveFile = File(batteryDirectory, "current.sav")
+            val created = batteryDirectory.exists() || batteryDirectory.mkdirs()
+            Log.i(TAG, "Expected save directory: ${batteryDirectory.absolutePath}; createdOrExists=$created")
+            Log.i(TAG, "Expected save file path: ${batterySaveFile.absolutePath}; existsBeforeBoot=${batterySaveFile.exists()}; sizeBeforeBoot=${batterySaveFile.length()}")
+            NativeEmulatorBridge.loadRom(localRomPath, gameRootPath)
         } else {
             "released: emulator runtime was already released"
         }

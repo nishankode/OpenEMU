@@ -8,7 +8,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class RomMetadataStore(context: Context) {
-    private val metadataFile = File(context.applicationContext.filesDir, METADATA_FILENAME)
+    private val filesDir = context.applicationContext.filesDir
+    private val metadataFile = File(filesDir, METADATA_FILENAME)
 
     fun loadRoms(): List<RomHandle> {
         if (!metadataFile.exists()) {
@@ -21,14 +22,19 @@ class RomMetadataStore(context: Context) {
             buildList {
                 for (index in 0 until array.length()) {
                     val item = array.getJSONObject(index)
+                    val id = item.getString(KEY_ID)
                     val localPath = item.optString(KEY_LOCAL_ROM_PATH).takeIf { it.isNotBlank() }
+                    val gameRootPath = item.optString(KEY_GAME_ROOT_PATH)
+                        .takeIf { it.isNotBlank() }
+                        ?: File(filesDir, "games/$id").absolutePath
                     val available = localPath?.let { File(it).isFile } ?: false
                     add(
                         RomHandle(
-                            id = item.getString(KEY_ID),
+                            id = id,
                             uri = Uri.EMPTY,
                             filename = item.getString(KEY_FILENAME),
                             localRomPath = localPath,
+                            gameRootPath = gameRootPath,
                             extension = item.optString(KEY_EXTENSION, "gba"),
                             importedAtMillis = item.optLong(KEY_IMPORTED_AT, 0L),
                             isAvailable = available
@@ -52,6 +58,7 @@ class RomMetadataStore(context: Context) {
                         .put(KEY_ID, rom.id)
                         .put(KEY_FILENAME, rom.filename)
                         .put(KEY_LOCAL_ROM_PATH, rom.localRomPath.orEmpty())
+                        .put(KEY_GAME_ROOT_PATH, rom.gameRootPath.orEmpty())
                         .put(KEY_EXTENSION, rom.extension)
                         .put(KEY_IMPORTED_AT, rom.importedAtMillis)
                 )
@@ -70,6 +77,7 @@ class RomMetadataStore(context: Context) {
         const val KEY_ID = "id"
         const val KEY_FILENAME = "filename"
         const val KEY_LOCAL_ROM_PATH = "localRomPath"
+        const val KEY_GAME_ROOT_PATH = "gameRootPath"
         const val KEY_EXTENSION = "extension"
         const val KEY_IMPORTED_AT = "importedAtMillis"
     }

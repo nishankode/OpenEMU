@@ -46,7 +46,7 @@ object NativeEmulatorBridge {
         nativeDetachSurface()
     }
 
-    fun loadRom(localRomPath: String): String {
+    fun loadRom(localRomPath: String, gameRootPath: String): String {
         val failure = loadFailure
         if (failure != null) {
             Log.w(TAG, "Skipping loadRom because native library is unavailable.")
@@ -54,7 +54,7 @@ object NativeEmulatorBridge {
         }
 
         return runCatching {
-            nativeLoadRom(localRomPath)
+            nativeLoadRom(localRomPath, gameRootPath)
         }.onFailure { error ->
             Log.e(TAG, "Native operation failed: loadRom", error)
         }.getOrElse { error ->
@@ -94,6 +94,22 @@ object NativeEmulatorBridge {
         }
     }
 
+    fun getSaveStatus(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping getSaveStatus because native library is unavailable.")
+            return "save unavailable: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeGetSaveStatus()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: getSaveStatus", error)
+        }.getOrElse { error ->
+            "save status unavailable: ${error.javaClass.simpleName}"
+        }
+    }
+
     fun getCoreStatus(): String {
         val failure = loadFailure
         if (failure != null) {
@@ -127,11 +143,12 @@ object NativeEmulatorBridge {
     private external fun nativeAttachSurface(surface: Surface)
     private external fun nativeResize(width: Int, height: Int)
     private external fun nativeDetachSurface()
-    private external fun nativeLoadRom(localRomPath: String): String
+    private external fun nativeLoadRom(localRomPath: String, gameRootPath: String): String
     private external fun nativePause()
     private external fun nativeResume()
     private external fun nativeSetInputMask(inputMask: Int)
     private external fun nativeRelease()
     private external fun nativeGetRuntimeStatus(): String
+    private external fun nativeGetSaveStatus(): String
     private external fun nativeGetCoreStatus(): String
 }

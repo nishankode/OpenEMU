@@ -13,7 +13,7 @@ EmulatorSession::~EmulatorSession() {
     release();
 }
 
-RomLoadResult EmulatorSession::loadRom(const std::string& romPath) {
+RomLoadResult EmulatorSession::loadRom(const std::string& romPath, const std::string& gameRootPath) {
     __android_log_print(
         ANDROID_LOG_INFO,
         kTag,
@@ -23,7 +23,8 @@ RomLoadResult EmulatorSession::loadRom(const std::string& romPath) {
 
     released_ = false;
     paused_ = false;
-    const RomLoadResult result = coreAdapter_.loadAndBootGba(romPath);
+    const SavePaths savePaths(gameRootPath);
+    const RomLoadResult result = coreAdapter_.loadAndBootGba(romPath, savePaths);
     if (!result.isSuccess()) {
         paused_ = true;
     }
@@ -51,11 +52,19 @@ void EmulatorSession::setInputMask(std::uint32_t inputMask) {
     coreAdapter_.setInputMask(inputMask);
 }
 
+std::string EmulatorSession::flushBatterySave() {
+    if (released_) {
+        return coreAdapter_.saveStatus();
+    }
+    return coreAdapter_.flushBatterySave();
+}
+
 void EmulatorSession::pause() {
     if (released_) {
         return;
     }
     paused_ = true;
+    coreAdapter_.flushBatterySave();
     coreAdapter_.pause();
 }
 
@@ -94,6 +103,10 @@ std::string EmulatorSession::statusMessage() const {
         return "released: emulator runtime resources released";
     }
     return coreAdapter_.statusMessage();
+}
+
+std::string EmulatorSession::saveStatus() const {
+    return coreAdapter_.saveStatus();
 }
 
 } // namespace linkroom

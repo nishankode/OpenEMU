@@ -50,7 +50,7 @@ class GameLibraryViewModel : ViewModel() {
             result
                 .onSuccess { rom ->
                     Log.i(TAG, "Imported ROM metadata: ${rom.filename}; localPath=${rom.localRomPath}")
-                    val updatedRoms = _uiState.value.importedRoms + rom
+                    val updatedRoms = (_uiState.value.importedRoms.filterNot { it.id == rom.id } + rom)
                     withContext(Dispatchers.IO) {
                         metadataStore?.saveRoms(updatedRoms)
                     }

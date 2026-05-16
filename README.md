@@ -15,8 +15,9 @@ This project is a feasibility scaffold only. It includes:
 - App-private `.gba` copy for native loading
 - mGBA native video rendering through JNI and CMake
 - Minimal on-screen controls for D-pad, A/B, L/R, Start, and Select
+- In-game battery save load/flush for games that support normal saves
 
-This phase can boot, render, and accept basic touch input for user-provided `.gba` files through mGBA. No audio, game progress saving, battery saves, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
+This phase can boot, render, accept basic touch input, and persist normal in-game battery saves for user-provided `.gba` files through mGBA. No audio, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
 
 ## Requirements
 
@@ -60,8 +61,10 @@ The output should list one device with the `device` state. If it says `unauthori
 10. Tap import and select your own legally obtained `.gba` or `.zip` file.
 11. Tap the selected `.gba` file in the library to open the native player screen.
 12. Use the on-screen controls to verify button input reaches the game.
-13. Background and resume the app once to confirm the surface detaches and reattaches cleanly.
-14. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
+13. Use the game's normal in-game save flow, then leave the emulator to flush `current.sav`.
+14. Reopen the same ROM and confirm the game sees the previous in-game save.
+15. Background and resume the app once to confirm the surface detaches and reattaches cleanly.
+16. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
 
 For app state and native runtime logs:
 
@@ -75,7 +78,9 @@ adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRunti
 - Imported ROM metadata is stored in a small JSON file in app-private storage.
 - `.gba` imports are copied into app-private storage and are not recopied on every launch.
 - If copied ROM content is missing, the library item is shown as unavailable instead of crashing.
-- Game progress saving is not implemented yet. Closing the app and reopening the ROM starts a fresh emulator session.
+- Normal in-game battery saves are stored at `files/games/{rom_id}/battery/current.sav`.
+- Before replacing an existing battery save, the app attempts a `backup-before-flush-{timestamp}.sav` copy in the same battery directory.
+- Save states are not implemented yet. Closing and reopening the ROM starts a fresh emulator session that can load the prior in-game battery save.
 - The native surface renders mGBA video after a successful `.gba` load and keeps the placeholder checkerboard as a fallback.
 - Touch input is limited to simple on-screen controls. External controllers, haptics, and layout customization are not implemented yet.
 - If the native library cannot be loaded, the app should show a graceful placeholder status instead of crashing.

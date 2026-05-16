@@ -19,6 +19,10 @@ std::string SavePaths::currentBatterySave() const {
     return batteryDirectory() + "/" + kCurrentBatterySave;
 }
 
+std::string SavePaths::batteryBackupSave(std::int64_t timestampMillis) const {
+    return batteryDirectory() + "/" + kBatteryBackupPrefix + std::to_string(timestampMillis) + ".sav";
+}
+
 std::string SavePaths::statesDirectory() const {
     if (gameRoot_.empty()) {
         return kStatesDirectory;

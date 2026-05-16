@@ -8,11 +8,17 @@
 
 #include <android/log.h>
 #include <android/native_window.h>
+#include <chrono>
 #include <cerrno>
 #include <cstring>
+#include <cstdlib>
+#include <fstream>
 #include <fcntl.h>
 #include <algorithm>
+#include <sstream>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "video_frame_buffer.h"
 
@@ -25,6 +31,86 @@ constexpr int kVideoStride = 256;
 bool fileExists(const std::string& path) {
     struct stat info {};
     return !path.empty() && stat(path.c_str(), &info) == 0 && S_ISREG(info.st_mode);
+}
+
+long fileSize(const std::string& path) {
+    struct stat info {};
+    if (path.empty() || stat(path.c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+        return 0;
+    }
+    return static_cast<long>(info.st_size);
+}
+
+bool directoryExists(const std::string& path) {
+    struct stat info {};
+    return !path.empty() && stat(path.c_str(), &info) == 0 && S_ISDIR(info.st_mode);
+}
+
+bool ensureDirectory(const std::string& path) {
+    if (path.empty() || directoryExists(path)) {
+        return !path.empty();
+    }
+
+    std::string current;
+    size_t start = 0;
+    if (path[0] == '/') {
+        current = "/";
+        start = 1;
+    }
+
+    while (start <= path.size()) {
+        const size_t end = path.find('/', start);
+        const std::string part = path.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        if (!part.empty()) {
+            if (!current.empty() && current.back() != '/') {
+                current += "/";
+            }
+            current += part;
+            if (!directoryExists(current) && mkdir(current.c_str(), 0700) != 0 && errno != EEXIST) {
+                return false;
+            }
+        }
+        if (end == std::string::npos) {
+            break;
+        }
+        start = end + 1;
+    }
+    return directoryExists(path);
+}
+
+std::vector<std::uint8_t> readFile(const std::string& path) {
+    std::ifstream input(path, std::ios::binary);
+    if (!input) {
+        return {};
+    }
+    input.seekg(0, std::ios::end);
+    const auto size = input.tellg();
+    if (size <= 0) {
+        return {};
+    }
+    input.seekg(0, std::ios::beg);
+    std::vector<std::uint8_t> data(static_cast<size_t>(size));
+    input.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(data.size()));
+    if (!input) {
+        return {};
+    }
+    return data;
+}
+
+bool copyFile(const std::string& from, const std::string& to) {
+    std::ifstream input(from, std::ios::binary);
+    std::ofstream output(to, std::ios::binary | std::ios::trunc);
+    if (!input || !output) {
+        return false;
+    }
+    output << input.rdbuf();
+    return output.good();
+}
+
+std::int64_t nowMillis() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    ).count();
 }
 }
 
@@ -68,7 +154,7 @@ std::string MgbaCoreAdapter::linkedCoreStatus() const {
         : "mGBA core linked: false";
 }
 
-RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath) {
+RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath, const SavePaths& savePaths) {
     __android_log_print(ANDROID_LOG_INFO, kTag, "Loading ROM from private path: %s", romPath.c_str());
     release();
 
@@ -77,6 +163,35 @@ RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath) {
             RomLoadStatus::FileNotFound,
             "file not found: copied ROM is missing from app-private storage"
         };
+    }
+
+    gameRootDirectory_ = savePaths.gameRoot();
+    batteryDirectory_ = savePaths.batteryDirectory();
+    batterySavePath_ = savePaths.currentBatterySave();
+    __android_log_print(ANDROID_LOG_INFO, kTag, "Save game root: %s", savePaths.gameRoot().c_str());
+    __android_log_print(ANDROID_LOG_INFO, kTag, "Expected battery directory: %s", batteryDirectory_.c_str());
+    __android_log_print(ANDROID_LOG_INFO, kTag, "Expected battery save file: %s", batterySavePath_.c_str());
+    const bool saveExistedBeforeBoot = fileExists(batterySavePath_);
+    const long saveSizeBeforeBoot = fileSize(batterySavePath_);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "Battery save before boot: exists=%s size=%ld",
+        saveExistedBeforeBoot ? "true" : "false",
+        saveSizeBeforeBoot
+    );
+    const bool saveDirectoryReady = ensureDirectory(batteryDirectory_);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "Battery directory create/check result: %s",
+        saveDirectoryReady ? "success" : "failure"
+    );
+    if (!saveDirectoryReady) {
+        saveStatus_ = "save flush failed: unable to prepare battery save directory";
+        __android_log_print(ANDROID_LOG_WARN, kTag, "%s: %s", saveStatus_.c_str(), batteryDirectory_.c_str());
+    } else {
+        __android_log_print(ANDROID_LOG_INFO, kTag, "Battery save path: %s", batterySavePath_.c_str());
     }
 
     core_ = mCoreCreate(mPLATFORM_GBA);
@@ -139,6 +254,26 @@ RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath) {
         };
     }
     romLoaded_ = true;
+
+    const bool saveLoadResult = !batterySavePath_.empty() && mCoreLoadSaveFile(core_, batterySavePath_.c_str(), false);
+    const bool saveExistsAfterAttach = fileExists(batterySavePath_);
+    const long saveSizeAfterAttach = fileSize(batterySavePath_);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "mGBA file-backed save attach result: %s; existsAfterAttach=%s sizeAfterAttach=%ld",
+        saveLoadResult ? "success" : "failure",
+        saveExistsAfterAttach ? "true" : "false",
+        saveSizeAfterAttach
+    );
+    if (!saveLoadResult) {
+        saveStatus_ = "save load failed: mGBA could not attach current.sav";
+    } else if (saveExistedBeforeBoot && saveSizeBeforeBoot > 0) {
+        saveStatus_ = "save loaded: current.sav";
+    } else {
+        saveStatus_ = "no save found: a new battery save will be created after in-game save";
+    }
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", saveStatus_.c_str());
 
     core_->reset(core_);
     for (int frame = 0; frame < kBootProbeFrames; ++frame) {
@@ -232,6 +367,85 @@ void MgbaCoreAdapter::setInputMask(std::uint32_t inputMask) {
     }
 }
 
+std::string MgbaCoreAdapter::flushBatterySave() {
+    if (core_ == nullptr || !romLoaded_) {
+        saveStatus_ = "save not flushed: no active ROM";
+        return saveStatus_;
+    }
+    if (batterySavePath_.empty() || batteryDirectory_.empty() || !ensureDirectory(batteryDirectory_)) {
+        saveStatus_ = "save flush failed: battery save directory unavailable";
+        __android_log_print(ANDROID_LOG_WARN, kTag, "%s", saveStatus_.c_str());
+        return saveStatus_;
+    }
+
+    void* saveData = nullptr;
+    const size_t saveSize = core_->savedataClone(core_, &saveData);
+    if (saveSize == 0 || saveData == nullptr) {
+        const bool existingFile = fileExists(batterySavePath_);
+        const long existingSize = fileSize(batterySavePath_);
+        if (existingFile && existingSize > 0) {
+            saveStatus_ = "save already file-backed: current.sav exists";
+        } else {
+            saveStatus_ = "save not flushed: this game has no battery save data yet";
+        }
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            kTag,
+            "%s; current.sav exists=%s size=%ld",
+            saveStatus_.c_str(),
+            existingFile ? "true" : "false",
+            existingSize
+        );
+        if (saveData != nullptr) {
+            std::free(saveData);
+        }
+        return saveStatus_;
+    }
+
+    if (fileExists(batterySavePath_)) {
+        const std::string backupPath = batteryDirectory_ + "/" + SavePaths::kBatteryBackupPrefix +
+            std::to_string(nowMillis()) + ".sav";
+        if (copyFile(batterySavePath_, backupPath)) {
+            __android_log_print(ANDROID_LOG_INFO, kTag, "Created battery save backup: %s", backupPath.c_str());
+        } else {
+            __android_log_print(ANDROID_LOG_WARN, kTag, "Unable to create battery save backup before flush.");
+        }
+    }
+
+    const std::string tempPath = batterySavePath_ + ".tmp";
+    bool wrote = false;
+    {
+        std::ofstream output(tempPath, std::ios::binary | std::ios::trunc);
+        if (output) {
+            output.write(static_cast<const char*>(saveData), static_cast<std::streamsize>(saveSize));
+            wrote = output.good();
+        }
+    }
+    std::free(saveData);
+
+    if (!wrote || rename(tempPath.c_str(), batterySavePath_.c_str()) != 0) {
+        unlink(tempPath.c_str());
+        saveStatus_ = "save flush failed: unable to write current.sav";
+        __android_log_print(ANDROID_LOG_WARN, kTag, "%s", saveStatus_.c_str());
+        return saveStatus_;
+    }
+
+    std::ostringstream message;
+    message << "save flushed: current.sav (" << saveSize << " bytes)";
+    saveStatus_ = message.str();
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "%s; gamesDirExists=%s batteryDirExists=%s currentExists=%s currentSize=%ld",
+        saveStatus_.c_str(),
+        directoryExists(gameRootDirectory_.substr(0, gameRootDirectory_.find_last_of('/'))) ? "true" : "false",
+        directoryExists(batteryDirectory_) ? "true" : "false",
+        fileExists(batterySavePath_) ? "true" : "false",
+        fileSize(batterySavePath_)
+    );
+    return saveStatus_;
+}
+
 void MgbaCoreAdapter::pause() {
     paused_ = true;
 }
@@ -245,6 +459,7 @@ void MgbaCoreAdapter::resume() {
 void MgbaCoreAdapter::release() {
     if (core_ != nullptr) {
         __android_log_print(ANDROID_LOG_INFO, kTag, "Releasing mGBA core.");
+        flushBatterySave();
         if (romLoaded_) {
             core_->unloadROM(core_);
         }
@@ -252,6 +467,9 @@ void MgbaCoreAdapter::release() {
         core_ = nullptr;
     }
     videoBuffer_.clear();
+    gameRootDirectory_.clear();
+    batterySavePath_.clear();
+    batteryDirectory_.clear();
     inputMask_ = 0;
     romLoaded_ = false;
     paused_ = true;
@@ -263,6 +481,10 @@ bool MgbaCoreAdapter::hasLoadedRom() const {
 
 bool MgbaCoreAdapter::isPaused() const {
     return paused_;
+}
+
+std::string MgbaCoreAdapter::saveStatus() const {
+    return saveStatus_;
 }
 
 } // namespace linkroom

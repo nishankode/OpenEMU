@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
 
@@ -30,7 +31,7 @@ object RomPicker {
         }
 
         Log.i(TAG, "Accepted ROM import candidate: $filename")
-        val id = UUID.randomUUID().toString()
+        var id = UUID.randomUUID().toString()
         val localRomPath = if (extension == "gba") {
             copyGbaToPrivateStorage(context, uri, id)
                 .getOrElse { error ->
@@ -39,11 +40,22 @@ object RomPicker {
                             error.message ?: "Unable to copy this .gba file into app storage."
                         )
                     )
+                }.let { temporaryPath ->
+                    val temporaryFile = File(temporaryPath)
+                    id = sha256(temporaryFile)
+                    val finalFile = File(temporaryFile.parentFile, "$id.gba")
+                    if (temporaryFile.absolutePath != finalFile.absolutePath) {
+                        temporaryFile.copyTo(finalFile, overwrite = true)
+                        temporaryFile.delete()
+                    }
+                    Log.i(TAG, "Stable ROM identity: $id")
+                    finalFile.absolutePath
                 }
         } else {
             Log.i(TAG, "ZIP import accepted for library only; native boot supports .gba in this phase.")
             null
         }
+        val gameRootPath = localRomPath?.let { File(context.filesDir, "games/$id").absolutePath }
 
         return Result.success(
             RomHandle(
@@ -51,6 +63,7 @@ object RomPicker {
                 uri = uri,
                 filename = filename,
                 localRomPath = localRomPath,
+                gameRootPath = gameRootPath,
                 extension = extension,
                 importedAtMillis = System.currentTimeMillis(),
                 isAvailable = localRomPath != null
@@ -91,6 +104,21 @@ object RomPicker {
         }.onFailure { error ->
             Log.w(TAG, "Failed to copy selected ROM into private storage.", error)
         }
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val read = input.read(buffer)
+                if (read <= 0) {
+                    break
+                }
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString(separator = "") { byte -> "%02x".format(byte) }
     }
 
     private fun resolveDisplayName(context: Context, uri: Uri): String? {
