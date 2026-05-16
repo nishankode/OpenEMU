@@ -1,0 +1,11 @@
+# ninja log v5
+26	1361	8006439352920140	CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o	8abc5b0015e30960
+13	1762	8006439356925711	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	ae27c806baff4976
+1763	2041	8006439359676134	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	a99152050bf5de2
+106	256	8006446885267083	CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o	37b1e2b232784bb1
+71	1672	8006446899303703	CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o	b11ab28f21446603
+34	1995	8006446902555713	CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o	e7a31fc76d229fc4
+51	2018	8006446902730516	CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o	5e8393e34d7f42e7
+17	2079	8006446903427233	CMakeFiles/linkroom_native.dir/linkroom_core/save_paths.cpp.o	9c6fa9b13dd4f66b
+88	2160	8006446904202236	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	c25f928e240e9122
+2161	2455	8006446907134240	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	370fd34901ada0a1

@@ -1,0 +1,32 @@
+[
+{
+  "directory": "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
+  "command": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dlinkroom_native_EXPORTS -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC -o CMakeFiles\\linkroom_native.dir\\native_emulator_bridge.cpp.o -c C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\native_emulator_bridge.cpp",
+  "file": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\native_emulator_bridge.cpp"
+},
+{
+  "directory": "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
+  "command": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dlinkroom_native_EXPORTS -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC -o CMakeFiles\\linkroom_native.dir\\placeholder_renderer.cpp.o -c C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\placeholder_renderer.cpp",
+  "file": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\placeholder_renderer.cpp"
+},
+{
+  "directory": "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
+  "command": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dlinkroom_native_EXPORTS -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC -o CMakeFiles\\linkroom_native.dir\\linkroom_core\\emulator_session.cpp.o -c C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\emulator_session.cpp",
+  "file": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\emulator_session.cpp"
+},
+{
+  "directory": "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
+  "command": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dlinkroom_native_EXPORTS -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC -o CMakeFiles\\linkroom_native.dir\\linkroom_core\\mgba_core_adapter.cpp.o -c C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\mgba_core_adapter.cpp",
+  "file": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\mgba_core_adapter.cpp"
+},
+{
+  "directory": "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
+  "command": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dlinkroom_native_EXPORTS -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC -o CMakeFiles\\linkroom_native.dir\\linkroom_core\\save_paths.cpp.o -c C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\save_paths.cpp",
+  "file": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\save_paths.cpp"
+},
+{
+  "directory": "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
+  "command": "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dlinkroom_native_EXPORTS -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC -o CMakeFiles\\linkroom_native.dir\\linkroom_core\\video_frame_buffer.cpp.o -c C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\video_frame_buffer.cpp",
+  "file": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\linkroom_core\\video_frame_buffer.cpp"
+}
+]

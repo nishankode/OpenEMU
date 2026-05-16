@@ -1,0 +1,11 @@
+mGBA source is not vendored in Phase 0.2A.
+
+When mGBA is added under third_party/mgba/upstream, copy the exact upstream license text into this area or reference the pinned upstream LICENSE file from NOTICE.md.
+
+Expected license family for mGBA: Mozilla Public License 2.0 (MPL-2.0).
+
+Before distributing builds that include mGBA:
+- Preserve upstream copyright and license notices.
+- Provide source for MPL-covered mGBA files and any modifications to those files.
+- Keep LinkRoom application code and wrapper code clearly separated from upstream mGBA source.
+- Confirm obligations with legal review.

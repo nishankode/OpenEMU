@@ -1,0 +1,3 @@
+C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/linkroom_native.dir
+C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/CMakeFiles/rebuild_cache.dir

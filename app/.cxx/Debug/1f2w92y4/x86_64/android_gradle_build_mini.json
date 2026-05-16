@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\src\\main\\cpp\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\.cxx\\Debug\\1f2w92y4\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\mnsnn\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\.cxx\\Debug\\1f2w92y4\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "linkroom_native::@6890427a1f51a3e7e1df": {
+      "artifactName": "linkroom_native",
+      "abi": "x86_64",
+      "output": "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\build\\intermediates\\cxx\\Debug\\1f2w92y4\\obj\\x86_64\\liblinkroom_native.so",
+      "runtimeFiles": []
+    }
+  }
+}

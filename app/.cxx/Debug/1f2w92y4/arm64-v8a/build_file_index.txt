@@ -1,0 +1,1 @@
+C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\src\main\cpp\CMakeLists.txt
