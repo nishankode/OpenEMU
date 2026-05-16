@@ -53,7 +53,7 @@ build CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o: CXX_COMPILER_
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\native_emulator_bridge.cpp.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
-  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/../../../../third_party/mgba/upstream/include
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir
 
@@ -61,7 +61,7 @@ build CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o: CXX_COMPILER__l
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\placeholder_renderer.cpp.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
-  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/../../../../third_party/mgba/upstream/include
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir
 
@@ -69,7 +69,7 @@ build CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o: CXX_C
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\emulator_session.cpp.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
-  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/../../../../third_party/mgba/upstream/include
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core
 
@@ -77,7 +77,7 @@ build CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o: CXX_
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\mgba_core_adapter.cpp.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
-  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/../../../../third_party/mgba/upstream/include
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core
 
@@ -85,7 +85,7 @@ build CMakeFiles/linkroom_native.dir/linkroom_core/save_paths.cpp.o: CXX_COMPILE
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\save_paths.cpp.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
-  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/../../../../third_party/mgba/upstream/include
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core
 
@@ -93,7 +93,7 @@ build CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o: CXX
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\video_frame_buffer.cpp.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
-  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/../../../../third_party/mgba/upstream/include
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core
 

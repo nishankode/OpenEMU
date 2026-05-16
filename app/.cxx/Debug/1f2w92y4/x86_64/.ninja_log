@@ -1,11 +1,15 @@
 # ninja log v5
-27	1397	8006439374930903	CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o	e2cb1d5752ea8675
-13	1855	8006439379467202	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	2b9c8351637ae28f
-1856	2115	8006439382109807	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/x86_64/liblinkroom_native.so	e5a9b41bdd7188cc
-94	229	8006446914895621	CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o	152610285a41704d
 60	1616	8006446928675735	CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o	558333febce997d8
-15	1965	8006446932174527	CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o	c44e083616ab7ed7
-45	2015	8006446932692580	CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o	4e286d06721f52d1
 30	2041	8006446932931461	CMakeFiles/linkroom_native.dir/linkroom_core/save_paths.cpp.o	26ef2b1a1d019ea
 77	2141	8006446933939752	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	cff822d717ce5037
 2142	2414	8006446936637574	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/x86_64/liblinkroom_native.so	ce442cd2c3253147
+94	229	8006446914895621	CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o	152610285a41704d
+15	1965	8006446932174527	CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o	c44e083616ab7ed7
+45	2015	8006446932692580	CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o	4e286d06721f52d1
+100	238	8006453012598649	CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o	b22cf7505006e163
+63	1651	8006453026673388	CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o	ec42bae01964011c
+17	2023	8006453030370186	CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o	be9468649cdfc86c
+32	2086	8006453030990685	CMakeFiles/linkroom_native.dir/linkroom_core/save_paths.cpp.o	551fa75aa42bc1bf
+47	2089	8006453030990685	CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o	a926ba01bb16efd7
+79	2230	8006453032424297	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	13b27371185c4488
+2231	2511	8006453035198054	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/x86_64/liblinkroom_native.so	ce442cd2c3253147
