@@ -10,11 +10,12 @@ This project is a feasibility scaffold only. It includes:
 - Jetpack Compose UI
 - Legal-safe onboarding
 - ROM picker using Android Storage Access Framework
-- In-memory game library placeholder
-- Emulator player placeholder screen
-- Native C++ placeholder renderer through JNI and CMake
+- Persisted onboarding completion
+- Persisted basic ROM library metadata
+- App-private `.gba` copy for native loading
+- mGBA native video rendering through JNI and CMake
 
-Real emulation is not implemented yet. No emulator core, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
+This phase can boot and render user-provided `.gba` files through mGBA. No game progress saving, battery saves, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
 
 ## Requirements
 
@@ -56,20 +57,24 @@ The output should list one device with the `device` state. If it says `unauthori
 8. Open LinkRoom on the phone.
 9. Continue past onboarding.
 10. Tap import and select your own legally obtained `.gba` or `.zip` file.
-11. Tap the selected file in the library to open the native placeholder player screen.
-12. Background and resume the app once to confirm the placeholder surface detaches and reattaches cleanly.
+11. Tap the selected `.gba` file in the library to open the native player screen.
+12. Background and resume the app once to confirm the surface detaches and reattaches cleanly.
+13. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
 
-For native placeholder logs:
+For app state and native runtime logs:
 
 ```powershell
-adb logcat -s NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer GameLibraryViewModel RomPicker
+adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer GameLibraryViewModel RomPicker
 ```
 
 ## Notes
 
-- Imported ROM metadata is stored in memory only for Phase 0.
-- If Android kills and recreates the process, the in-memory library will be empty and files must be selected again.
-- The native surface renders a placeholder checkerboard from C++.
+- Onboarding completion is stored in shared preferences.
+- Imported ROM metadata is stored in a small JSON file in app-private storage.
+- `.gba` imports are copied into app-private storage and are not recopied on every launch.
+- If copied ROM content is missing, the library item is shown as unavailable instead of crashing.
+- Game progress saving is not implemented yet. Closing the app and reopening the ROM starts a fresh emulator session.
+- The native surface renders mGBA video after a successful `.gba` load and keeps the placeholder checkerboard as a fallback.
 - If the native library cannot be loaded, the app should show a graceful placeholder status instead of crashing.
 - Future emulator integration should stay behind `EmulatorRuntime` and `NativeEmulatorBridge`.
 - License obligations must be reviewed before vendoring or integrating any emulator core.

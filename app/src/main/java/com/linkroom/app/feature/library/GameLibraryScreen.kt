@@ -74,7 +74,7 @@ fun GameLibraryScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Phase 0 accepts .gba and .zip filenames only. The selected file is not copied or persisted yet.",
+                text = "Imported .gba files are copied into private app storage. Game progress saving is not implemented yet.",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -134,7 +134,7 @@ private fun EmptyLibrary() {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Phase 0 keeps imported ROM metadata in memory only.",
+            text = "Import a .gba file to keep it in this device's private app storage.",
             style = MaterialTheme.typography.bodyMedium
         )
     }
@@ -144,6 +144,7 @@ private fun EmptyLibrary() {
 private fun RomRow(rom: RomHandle, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
+        enabled = rom.isAvailable,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -151,7 +152,7 @@ private fun RomRow(rom: RomHandle, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(rom.filename)
-            Text("Open")
+            Text(if (rom.isAvailable) "Open" else "Missing")
         }
     }
 }

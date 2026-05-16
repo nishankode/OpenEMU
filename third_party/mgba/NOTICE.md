@@ -2,7 +2,7 @@
 
 Selected emulator core: mGBA.
 
-Phase 0.2B3 status:
+Phase 0.2C1 status:
 
 - Upstream source is vendored under `third_party/mgba/upstream`.
 - Upstream URL: `https://github.com/mgba-emu/mgba`.
@@ -12,7 +12,7 @@ Phase 0.2B3 status:
 - License text: `third_party/mgba/LICENSE` and `third_party/mgba/upstream/LICENSE`.
 - Local patches: none.
 - Native integration level: actual mGBA implementation code is compiled into static target `linkroom_mgba` and linked into `linkroom_native`.
-- Runtime usage level: native smoke-check plus `.gba` ROM load/reset/short boot probe from app-private storage. mGBA video presentation, audio, save states, battery saves, link cable, and online features are not active.
+- Runtime usage level: native smoke-check plus `.gba` ROM load/reset/frame stepping from app-private storage. mGBA software video frames render to the existing Android `SurfaceView`; audio, input controls, save states, battery saves, link cable, and online features are not active.
 - Minimal build options: `LIBMGBA_ONLY=ON`, `M_CORE_GBA=ON`, `M_CORE_GB=OFF`, `MINIMAL_CORE=2`, `ENABLE_EXTRA=ON`, frontends and optional dependencies disabled.
 
 Future distribution checklist:

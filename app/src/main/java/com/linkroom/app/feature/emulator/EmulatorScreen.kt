@@ -41,12 +41,14 @@ fun EmulatorScreen(
     val runtime = remember { EmulatorRuntime() }
     val lifecycleOwner = LocalLifecycleOwner.current
     var bootStatus by remember(rom?.id) {
-        mutableStateOf("Waiting for ROM load.")
+        mutableStateOf("loading: waiting for ROM load")
     }
 
     DisposableEffect(runtime, rom?.id) {
+        bootStatus = "loading: preparing emulator runtime"
         bootStatus = when {
             rom == null -> "No ROM selected."
+            !rom.isAvailable -> "failed: copied ROM file is missing from private app storage"
             rom.localRomPath == null -> "Native boot supports copied .gba files only in this phase. ZIP import is library-only for now."
             else -> runtime.loadRom(rom.localRomPath)
         }
@@ -62,9 +64,12 @@ fun EmulatorScreen(
     DisposableEffect(lifecycleOwner, runtime) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_RESUME -> runtime.resume()
-                Lifecycle.Event.ON_PAUSE -> runtime.pause()
-                Lifecycle.Event.ON_DESTROY -> runtime.release()
+                Lifecycle.Event.ON_RESUME -> bootStatus = runtime.resume()
+                Lifecycle.Event.ON_PAUSE -> bootStatus = runtime.pause()
+                Lifecycle.Event.ON_DESTROY -> {
+                    runtime.release()
+                    bootStatus = "released: emulator runtime resources released"
+                }
                 else -> Unit
             }
         }
@@ -121,12 +126,12 @@ fun EmulatorScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "mGBA boot status: $bootStatus",
+                text = "mGBA runtime status: $bootStatus",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Placeholder renderer remains active; mGBA video frames are not displayed yet.",
+                text = "Video frames render here after a .gba loads. Placeholder rendering remains the fallback for empty or failed loads.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -141,7 +146,7 @@ private fun MissingRomContent(onBack: () -> Unit) {
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
-        text = "Phase 0 keeps imports in memory only. Return to the library and select the file again.",
+        text = "Return to the library and select an available imported file.",
         style = MaterialTheme.typography.bodyMedium
     )
     Spacer(modifier = Modifier.height(16.dp))

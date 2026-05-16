@@ -50,7 +50,10 @@ object RomPicker {
                 id = id,
                 uri = uri,
                 filename = filename,
-                localRomPath = localRomPath
+                localRomPath = localRomPath,
+                extension = extension,
+                importedAtMillis = System.currentTimeMillis(),
+                isAvailable = localRomPath != null
             )
         )
     }

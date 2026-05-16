@@ -6,6 +6,8 @@
 #include "save_paths.h"
 #include "video_frame_buffer.h"
 
+struct ANativeWindow;
+
 namespace linkroom {
 
 class EmulatorSession {
@@ -17,11 +19,15 @@ public:
     EmulatorSession& operator=(const EmulatorSession&) = delete;
 
     RomLoadResult loadRom(const std::string& romPath);
+    bool runFrame();
+    bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     void pause();
     void resume();
     void release();
 
     bool isReleased() const;
+    bool hasLoadedRom() const;
+    bool isPaused() const;
     std::string statusMessage() const;
 
 private:

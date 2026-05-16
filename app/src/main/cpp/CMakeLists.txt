@@ -4,10 +4,10 @@ project(linkroom_native)
 
 set(MGBA_UPSTREAM_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../../third_party/mgba/upstream")
 
-# Phase 0.2B2 mGBA build:
+# Phase 0.2C1 mGBA build:
 # Build a minimal static mGBA library from the pinned upstream source. This
-# links actual mGBA implementation code into linkroom_native, but runtime still
-# uses the existing placeholder renderer and does not boot ROMs.
+# links actual mGBA implementation code into linkroom_native. Runtime loads
+# user-copied .gba files and renders software video frames to SurfaceView.
 set(LIBMGBA_ONLY ON CACHE BOOL "" FORCE)
 set(BINARY_NAME linkroom_mgba CACHE STRING "" FORCE)
 set(M_CORE_GBA ON CACHE BOOL "" FORCE)

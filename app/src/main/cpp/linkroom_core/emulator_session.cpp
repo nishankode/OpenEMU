@@ -30,6 +30,20 @@ RomLoadResult EmulatorSession::loadRom(const std::string& romPath) {
     return result;
 }
 
+bool EmulatorSession::runFrame() {
+    if (released_ || paused_) {
+        return false;
+    }
+    return coreAdapter_.runFrame();
+}
+
+bool EmulatorSession::renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight) {
+    if (released_ || paused_) {
+        return false;
+    }
+    return coreAdapter_.renderFrameToWindow(window, windowWidth, windowHeight);
+}
+
 void EmulatorSession::pause() {
     if (released_) {
         return;
@@ -60,7 +74,18 @@ bool EmulatorSession::isReleased() const {
     return released_;
 }
 
+bool EmulatorSession::hasLoadedRom() const {
+    return !released_ && coreAdapter_.hasLoadedRom();
+}
+
+bool EmulatorSession::isPaused() const {
+    return paused_ || coreAdapter_.isPaused();
+}
+
 std::string EmulatorSession::statusMessage() const {
+    if (released_) {
+        return "released: emulator runtime resources released";
+    }
     return coreAdapter_.statusMessage();
 }
 

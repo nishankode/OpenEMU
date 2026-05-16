@@ -1,6 +1,6 @@
 # mGBA Third-Party Source
 
-Phase 0.2B3 vendors and compiles pinned mGBA source for Android NDK integration preparation and adds a native ROM boot probe for user-selected `.gba` files copied into app-private storage.
+Phase 0.2C1 vendors and compiles pinned mGBA source, loads user-selected `.gba` files copied into app-private storage, and renders mGBA software video frames to the existing Android `SurfaceView`.
 
 ## Current Status
 
@@ -12,8 +12,9 @@ Phase 0.2B3 vendors and compiles pinned mGBA source for Android NDK integration 
 - `linkroom_native` links against actual mGBA implementation code.
 - The app still uses the Phase 0 native placeholder renderer.
 - User-selected `.gba` files are copied from Android SAF into app-private storage before native loading.
-- Native code can create an mGBA GBA core, load the copied ROM, reset it, and run a short boot probe.
-- No mGBA video presentation, audio, save states, battery saves, fast-forward, link cable, or online functionality is implemented.
+- Native code can create an mGBA GBA core, load the copied ROM, reset it, and run frames continuously on a native thread.
+- mGBA software video frames render into the existing `SurfaceView`; the placeholder renderer remains a fallback for empty or failed loads.
+- No audio, input controls, save states, battery saves, fast-forward, link cable, or online functionality is implemented.
 
 ## Source Pinning Workflow
 
@@ -43,11 +44,11 @@ This verifies the Android native toolchain can compile and link actual pinned mG
 
 The Settings screen calls a native smoke-check that creates and releases an mGBA GBA core object, returning a status string. It does not load ROMs.
 
-## Phase 0.2B3 ROM Boot Probe
+## Phase 0.2B3 ROM Load Path
 
 The Kotlin import path copies only selected `.gba` files into app-private storage under `files/imported_roms/{rom-id}.gba`. Native code never receives raw SAF URIs.
 
-The native boot probe sequence is:
+The native load sequence is:
 
 1. Create an mGBA GBA core with `mCoreCreate(mPLATFORM_GBA)`.
 2. Initialize the core and config.
@@ -58,4 +59,15 @@ The native boot probe sequence is:
 7. Reset the core and run a few frames.
 8. Return a clear status string to Kotlin.
 
-The existing placeholder `SurfaceView` renderer remains active. Real mGBA video frames are intentionally not displayed in this phase.
+## Phase 0.2C1 Video Rendering
+
+After a `.gba` load succeeds, the JNI bridge starts a native emulation thread. That thread advances mGBA with `core->runFrame`, then copies the 240x160 software framebuffer into the current `ANativeWindow` using simple nearest-neighbor scaling with black letterboxing.
+
+Surface lifecycle remains defensive:
+
+- Surface attach stores the current `ANativeWindow`.
+- Surface detach releases the window while the emulation thread keeps running paused from rendering until a new surface appears.
+- Pause/resume toggles core stepping.
+- Back navigation releases the core and stops the emulation thread.
+
+The placeholder renderer is still used when no ROM is loaded, when `.zip` import is selected, or when ROM loading fails.

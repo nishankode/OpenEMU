@@ -20,6 +20,24 @@ class GameLibraryViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(RomImportState())
     val uiState: StateFlow<RomImportState> = _uiState.asStateFlow()
+    private var metadataStore: RomMetadataStore? = null
+
+    fun initialize(context: Context) {
+        if (metadataStore != null) {
+            return
+        }
+
+        val appContext = context.applicationContext
+        metadataStore = RomMetadataStore(appContext)
+        viewModelScope.launch {
+            val restoredRoms = withContext(Dispatchers.IO) {
+                metadataStore?.loadRoms().orEmpty()
+            }
+            _uiState.update { state ->
+                state.copy(importedRoms = (state.importedRoms + restoredRoms).distinctBy { it.id })
+            }
+        }
+    }
 
     fun importRom(context: Context, uri: Uri) {
         Log.i(TAG, "Import requested for URI: $uri")
@@ -32,9 +50,13 @@ class GameLibraryViewModel : ViewModel() {
             result
                 .onSuccess { rom ->
                     Log.i(TAG, "Imported ROM metadata: ${rom.filename}; localPath=${rom.localRomPath}")
+                    val updatedRoms = _uiState.value.importedRoms + rom
+                    withContext(Dispatchers.IO) {
+                        metadataStore?.saveRoms(updatedRoms)
+                    }
                     _uiState.update { state ->
                         state.copy(
-                            importedRoms = state.importedRoms + rom,
+                            importedRoms = updatedRoms,
                             importError = null
                         )
                     }

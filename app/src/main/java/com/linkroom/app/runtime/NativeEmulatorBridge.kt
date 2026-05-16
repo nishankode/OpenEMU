@@ -74,6 +74,22 @@ object NativeEmulatorBridge {
         nativeRelease()
     }
 
+    fun getRuntimeStatus(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping getRuntimeStatus because native library is unavailable.")
+            return "failed: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeGetRuntimeStatus()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: getRuntimeStatus", error)
+        }.getOrElse { error ->
+            "failed: ${error.javaClass.simpleName} while reading runtime status"
+        }
+    }
+
     fun getCoreStatus(): String {
         val failure = loadFailure
         if (failure != null) {
@@ -111,5 +127,6 @@ object NativeEmulatorBridge {
     private external fun nativePause()
     private external fun nativeResume()
     private external fun nativeRelease()
+    private external fun nativeGetRuntimeStatus(): String
     private external fun nativeGetCoreStatus(): String
 }

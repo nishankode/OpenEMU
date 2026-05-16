@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+struct ANativeWindow;
 struct mCore;
 
 namespace linkroom {
@@ -37,9 +38,13 @@ public:
     std::string statusMessage() const;
     std::string linkedCoreStatus() const;
     RomLoadResult loadAndBootGba(const std::string& romPath);
+    bool runFrame();
+    bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     void pause();
     void resume();
     void release();
+    bool hasLoadedRom() const;
+    bool isPaused() const;
 
 private:
     mCore* core_ = nullptr;

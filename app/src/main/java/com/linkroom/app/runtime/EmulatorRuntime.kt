@@ -13,10 +13,13 @@ class EmulatorRuntime {
 
     val nativeStatusMessage: String
         get() = NativeEmulatorBridge.unavailableMessage
-            ?: "Native placeholder renderer active."
+            ?: "Native SurfaceView renderer active."
 
     val coreStatusMessage: String
         get() = NativeEmulatorBridge.getCoreStatus()
+
+    val runtimeStatusMessage: String
+        get() = NativeEmulatorBridge.getRuntimeStatus()
 
     fun attachSurface(surface: Surface): Boolean {
         if (released.get()) {
@@ -45,20 +48,24 @@ class EmulatorRuntime {
         return if (!released.get()) {
             NativeEmulatorBridge.loadRom(localRomPath)
         } else {
-            "unexpected native error: emulator runtime was already released"
+            "released: emulator runtime was already released"
         }
     }
 
-    fun resume() {
+    fun resume(): String {
         if (!released.get()) {
             NativeEmulatorBridge.resume()
+            return NativeEmulatorBridge.getRuntimeStatus()
         }
+        return "released: emulator runtime was already released"
     }
 
-    fun pause() {
+    fun pause(): String {
         if (!released.get()) {
             NativeEmulatorBridge.pause()
+            return NativeEmulatorBridge.getRuntimeStatus()
         }
+        return "released: emulator runtime was already released"
     }
 
     fun release() {

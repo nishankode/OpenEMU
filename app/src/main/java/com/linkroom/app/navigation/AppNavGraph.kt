@@ -24,17 +24,22 @@ private object Routes {
 }
 
 @Composable
-fun AppNavGraph(libraryViewModel: GameLibraryViewModel) {
+fun AppNavGraph(
+    libraryViewModel: GameLibraryViewModel,
+    onboardingComplete: Boolean,
+    onOnboardingComplete: () -> Unit
+) {
     val navController = rememberNavController()
     val libraryState by libraryViewModel.uiState.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController,
-        startDestination = Routes.Onboarding
+        startDestination = if (onboardingComplete) Routes.Library else Routes.Onboarding
     ) {
         composable(Routes.Onboarding) {
             OnboardingScreen(
                 onContinue = {
+                    onOnboardingComplete()
                     navController.navigate(Routes.Library) {
                         popUpTo(Routes.Onboarding) { inclusive = true }
                     }

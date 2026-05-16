@@ -2,8 +2,11 @@
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <jni.h>
+#include <atomic>
+#include <chrono>
 #include <mutex>
 #include <string>
+#include <thread>
 
 #include "emulator_session.h"
 #include "mgba_core_adapter.h"
@@ -11,12 +14,15 @@
 
 namespace {
 constexpr const char* kTag = "LinkRoomNative";
+constexpr auto kFrameInterval = std::chrono::microseconds(16667);
 
 std::mutex gMutex;
 ANativeWindow* gWindow = nullptr;
 int gWidth = 0;
 int gHeight = 0;
 linkroom::EmulatorSession gSession;
+std::thread* gEmulationThread = nullptr;
+std::atomic<bool> gStopEmulationThread{false};
 
 void release_window_locked() {
     if (gWindow != nullptr) {
@@ -28,11 +34,68 @@ void release_window_locked() {
 }
 
 void render_locked() {
-    if (gWindow != nullptr && gWidth > 0 && gHeight > 0) {
+    if (gSession.hasLoadedRom()) {
+        __android_log_print(ANDROID_LOG_DEBUG, kTag, "skip placeholder: ROM frame renderer is active");
+    } else if (gWindow != nullptr && gWidth > 0 && gHeight > 0) {
         render_placeholder_frame(gWindow, gWidth, gHeight);
     } else {
         __android_log_print(ANDROID_LOG_DEBUG, kTag, "skip render without active surface");
     }
+}
+
+void emulation_thread_main() {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "emulation thread started");
+    auto nextFrame = std::chrono::steady_clock::now();
+    int renderedFrames = 0;
+
+    while (!gStopEmulationThread.load()) {
+        bool rendered = false;
+        {
+            std::lock_guard<std::mutex> lock(gMutex);
+            if (!gStopEmulationThread.load() && gSession.hasLoadedRom() && !gSession.isPaused()) {
+                const bool advanced = gSession.runFrame();
+                if (advanced && gWindow != nullptr && gWidth > 0 && gHeight > 0) {
+                    rendered = gSession.renderFrameToWindow(gWindow, gWidth, gHeight);
+                    if (rendered && renderedFrames < 5) {
+                        __android_log_print(ANDROID_LOG_INFO, kTag, "rendered mGBA video frame %d", renderedFrames + 1);
+                    }
+                    if (rendered) {
+                        ++renderedFrames;
+                    }
+                }
+            }
+        }
+
+        if (rendered) {
+            nextFrame += kFrameInterval;
+            std::this_thread::sleep_until(nextFrame);
+            if (std::chrono::steady_clock::now() > nextFrame + kFrameInterval) {
+                nextFrame = std::chrono::steady_clock::now();
+            }
+        } else {
+            nextFrame = std::chrono::steady_clock::now() + kFrameInterval;
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        }
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, kTag, "emulation thread stopped");
+}
+
+void stop_emulation_thread() {
+    gStopEmulationThread.store(true);
+    if (gEmulationThread != nullptr) {
+        if (gEmulationThread->joinable()) {
+            gEmulationThread->join();
+        }
+        delete gEmulationThread;
+        gEmulationThread = nullptr;
+    }
+}
+
+void start_emulation_thread() {
+    stop_emulation_thread();
+    gStopEmulationThread.store(false);
+    gEmulationThread = new std::thread(emulation_thread_main);
 }
 }
 
@@ -119,10 +182,19 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeLoadRom(
         path.c_str()
     );
 
-    std::lock_guard<std::mutex> lock(gMutex);
-    const linkroom::RomLoadResult result = gSession.loadRom(path);
-    __android_log_print(ANDROID_LOG_INFO, kTag, "load ROM result: %s", result.message.c_str());
-    render_locked();
+    stop_emulation_thread();
+
+    linkroom::RomLoadResult result;
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        result = gSession.loadRom(path);
+        __android_log_print(ANDROID_LOG_INFO, kTag, "load ROM result: %s", result.message.c_str());
+        render_locked();
+    }
+
+    if (result.isSuccess()) {
+        start_emulation_thread();
+    }
     return env->NewStringUTF(result.message.c_str());
 }
 
@@ -142,10 +214,18 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeResume(JNIEnv*, jobject
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRelease(JNIEnv*, jobject) {
+    stop_emulation_thread();
     std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "release runtime");
     gSession.release();
     release_window_locked();
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetRuntimeStatus(JNIEnv* env, jobject) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    const std::string status = gSession.statusMessage();
+    return env->NewStringUTF(status.c_str());
 }
 
 extern "C" JNIEXPORT jstring JNICALL
