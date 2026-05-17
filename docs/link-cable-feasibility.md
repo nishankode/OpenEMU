@@ -238,3 +238,38 @@ Recommended Phase 1C:
 - Add SIO mode-change and transfer-attempt counters to `LocalLinkSession`.
 - Test with a known link-capable user-provided ROM.
 - Keep save states disabled during active local-link tests.
+
+## Phase 1C Findings
+
+Phase 1C adds a hidden developer-only `Local Link Debug` screen. It is not part of the normal player or library flow. Access is intentionally buried behind the Settings screen version row: long-press the version row seven times, then open the revealed debug action.
+
+The screen can:
+
+- select Slot 1 from imported, available `.gba` ROMs
+- select Slot 2 from imported, available `.gba` ROMs
+- default Slot 2 to the same ROM when only one imported ROM exists
+- start the hidden `LocalLinkSession`
+- stop the hidden `LocalLinkSession`
+- poll `NativeEmulatorBridge.getLocalLinkStatus()` once per second
+- show the current phase, scheduler ticks, Slot 1/Slot 2 frame counts, lockstep attachment count, transfer phase, runtime duration, ROM paths, and separate save roots
+
+Save roots remain separated:
+
+```text
+files/link_tests/slot_1/
+files/link_tests/slot_2/
+```
+
+Phase 1C keeps the link debug harness headless. Slot 1 rendering from `LocalLinkSession` is intentionally not wired yet because the existing production renderer is still owned by the single-player `EmulatorSession`. Reusing that path for link rendering would require a native rendering abstraction that can attach a surface to either a single-player session or a local-link slot without introducing global-session conflicts.
+
+The screen does not expose save-state controls during link debug sessions. This avoids creating single-core state snapshots while two cores are expected to remain synchronized.
+
+Phase 1C status: partially working. It provides an on-device developer UI to start, stop, and observe the two-core local link scheduler using imported ROMs. It does not prove real game-level SIO transfer, and it does not render either linked slot yet.
+
+Recommended Phase 1D:
+
+- Add native Slot 1 video-buffer access to `LocalLinkSession`.
+- Attach the debug screen's `SurfaceView` to Slot 1 without changing the single-player renderer path.
+- Add transfer-attempt counters near the mGBA lockstep/SIO callbacks.
+- Add optional Player 1 input routing to the hidden link session.
+- Run a known link-capable user-provided ROM pair for 30+ seconds and verify whether SIO transfer activity appears.

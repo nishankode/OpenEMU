@@ -151,11 +151,9 @@ bool MgbaCoreAdapter::isCoreAvailable() const {
     static_assert(GBA_KEY_DOWN == 7, "Unexpected mGBA Down key enum layout.");
     static_assert(GBA_KEY_R == 8, "Unexpected mGBA R key enum layout.");
     static_assert(GBA_KEY_L == 9, "Unexpected mGBA L key enum layout.");
-    struct mCore* core = mCoreCreate(mPLATFORM_GBA);
-    if (core == nullptr) {
-        return false;
-    }
-    core->deinit(core);
+    // This status check is informational. Do not create/deinit a temporary
+    // mGBA core here: on Android, deinitializing a probe core before a full
+    // initialization path can crash inside ARMDeinit.
     return true;
 }
 
@@ -173,9 +171,7 @@ std::string MgbaCoreAdapter::statusMessage() const {
 }
 
 std::string MgbaCoreAdapter::linkedCoreStatus() const {
-    return isCoreAvailable()
-        ? "mGBA core linked: true (0.10.5, GBA core compiled; video/audio rendering enabled)"
-        : "mGBA core linked: false";
+    return "mGBA core linked: true (0.10.5, GBA core compiled; video/audio rendering enabled)";
 }
 
 std::string MgbaCoreAdapter::localLinkSmokeStatus() const {

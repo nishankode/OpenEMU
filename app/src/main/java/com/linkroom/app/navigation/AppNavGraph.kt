@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import com.linkroom.app.feature.emulator.EmulatorScreen
 import com.linkroom.app.feature.library.GameLibraryScreen
 import com.linkroom.app.feature.library.GameLibraryViewModel
+import com.linkroom.app.feature.link.LocalLinkDebugScreen
 import com.linkroom.app.feature.onboarding.OnboardingScreen
 import com.linkroom.app.feature.settings.SettingsScreen
 
@@ -18,6 +19,7 @@ private object Routes {
     const val Onboarding = "onboarding"
     const val Library = "library"
     const val Settings = "settings"
+    const val LocalLinkDebug = "local_link_debug"
     const val Emulator = "emulator/{romId}"
 
     fun emulator(romId: String) = "emulator/$romId"
@@ -63,7 +65,16 @@ fun AppNavGraph(
             )
         }
         composable(Routes.Settings) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenLocalLinkDebug = { navController.navigate(Routes.LocalLinkDebug) }
+            )
+        }
+        composable(Routes.LocalLinkDebug) {
+            LocalLinkDebugScreen(
+                importedRoms = libraryState.importedRoms,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(
             route = Routes.Emulator,

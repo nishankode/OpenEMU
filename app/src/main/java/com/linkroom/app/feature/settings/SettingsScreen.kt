@@ -1,5 +1,6 @@
 package com.linkroom.app.feature.settings
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -17,13 +18,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.linkroom.app.runtime.NativeEmulatorBridge
 import com.linkroom.app.ui.theme.AppAccent
 import com.linkroom.app.ui.theme.AppBackground
 import com.linkroom.app.ui.theme.AppCard
@@ -36,8 +40,11 @@ import com.linkroom.app.ui.theme.StatusPill
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
-    val coreStatus = remember { NativeEmulatorBridge.getCoreStatus() }
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onOpenLocalLinkDebug: () -> Unit = {}
+) {
+    var localLinkUnlockCount by remember { mutableIntStateOf(0) }
 
     Scaffold(
         containerColor = AppBackground,
@@ -99,8 +106,24 @@ fun SettingsScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppTextSecondary
                     )
-                    SettingRow("Native status", coreStatus, "Core")
-                    SettingRow("Version", "0.1.0", "Debug")
+                    SettingRow("Native status", "mGBA linked through the native runtime.", "Core")
+                    SettingRow(
+                        title = "Version",
+                        body = "0.1.0",
+                        status = "Debug",
+                        modifier = Modifier.pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    localLinkUnlockCount = (localLinkUnlockCount + 1).coerceAtMost(7)
+                                }
+                            )
+                        }
+                    )
+                    if (localLinkUnlockCount >= 7) {
+                        TextButton(onClick = onOpenLocalLinkDebug) {
+                            Text("Open Local Link Debug")
+                        }
+                    }
                 }
             }
         }
@@ -123,9 +146,14 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 }
 
 @Composable
-private fun SettingRow(title: String, body: String, status: String) {
+private fun SettingRow(
+    title: String,
+    body: String,
+    status: String,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {
