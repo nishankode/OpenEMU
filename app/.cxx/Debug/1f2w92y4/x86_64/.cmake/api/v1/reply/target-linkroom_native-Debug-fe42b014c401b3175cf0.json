@@ -32,13 +32,13 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 76,
+				"line" : 79,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 67,
+				"line" : 70,
 				"parent" : 0
 			}
 		]
@@ -81,7 +81,10 @@
 				3,
 				4,
 				5,
-				6
+				6,
+				7,
+				8,
+				9
 			],
 			"sysroot" : 
 			{
@@ -192,7 +195,10 @@
 				3,
 				4,
 				5,
-				6
+				6,
+				7,
+				8,
+				9
 			]
 		}
 	],
@@ -220,6 +226,24 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "linkroom_core/emulator_session.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "linkroom_core/link/local_link_session.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "linkroom_core/link/linked_emulator_slot.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "linkroom_core/link/link_scheduler.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

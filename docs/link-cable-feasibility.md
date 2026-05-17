@@ -184,3 +184,57 @@ Acceptance for Phase 1B:
 - No public link UI.
 
 Phase 1C can add a hidden two-instance UI only after Phase 1B proves no deadlocks and no save corruption in a controlled ROM/link test.
+
+## Phase 1B Findings
+
+Phase 1B adds a hidden native two-core prototype:
+
+```text
+app/src/main/cpp/linkroom_core/link/
+  local_link_session.h/.cpp
+  linked_emulator_slot.h/.cpp
+  link_scheduler.h/.cpp
+```
+
+Hidden JNI/Kotlin entry points:
+
+- `NativeEmulatorBridge.startLocalLinkTest(primaryRomPath, secondaryRomPath, baseTestDir)`
+- `NativeEmulatorBridge.stopLocalLinkTest()`
+- `NativeEmulatorBridge.getLocalLinkStatus()`
+
+These methods are not exposed in normal app UI.
+
+The prototype can:
+
+1. Create two mGBA GBA cores.
+2. Load two ROM paths. The same ROM path is allowed for both slots during testing.
+3. Use separate save roots:
+   - `baseTestDir/slot_1`
+   - `baseTestDir/slot_2`
+4. Create one shared `GBASIOLockstep`.
+5. Create and attach two `GBASIOLockstepNode` objects.
+6. Install the nodes as `SIO_MULTI` and `SIO_NORMAL_32` drivers.
+7. Reset both cores after link driver installation.
+8. Run both cores on one hidden native scheduler thread.
+9. Advance slot 1 and slot 2 in bounded alternating frame steps.
+10. Log scheduler watchdog status every few seconds.
+
+Current limitations:
+
+- The prototype is headless. It does not render either linked slot yet.
+- Player 2 is idle.
+- Audio is not mixed for the link session.
+- No real SIO transfer has been proven yet.
+- The lockstep callbacks are minimal same-thread callbacks. They avoid missing callback crashes, but they are not yet proof of robust transfer synchronization under real link activity.
+- Battery save roots are separated, but linked-session save lifecycle still needs a dedicated save coordinator before user-facing link tests.
+
+Phase 1B status: partially working. It proves two ROM-backed cores can be loaded into one hidden session and attached to one lockstep object, with a scheduler thread able to run them together. It does not yet prove a game-level cable handshake or trade room connection.
+
+Recommended Phase 1C:
+
+- Add a hidden developer-only link test screen or command path that starts `LocalLinkSession` from an imported ROM.
+- Show `getLocalLinkStatus()` live for 30+ seconds.
+- Render slot 1 from the link session, still keeping slot 2 headless.
+- Add SIO mode-change and transfer-attempt counters to `LocalLinkSession`.
+- Test with a known link-capable user-provided ROM.
+- Keep save states disabled during active local-link tests.

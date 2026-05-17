@@ -11,7 +11,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "arm64-v8a"
+			"value" : "armeabi-v7a"
 		},
 		{
 			"name" : "ANDROID_NDK",
@@ -267,7 +267,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "arm64-v8a"
+			"value" : "armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_ANDROID_NDK",
@@ -298,9 +298,73 @@
 			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-ar.exe"
 		},
 		{
+			"name" : "CMAKE_ASM_COMPILER",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "ASM compiler"
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe"
+		},
+		{
+			"name" : "CMAKE_ASM_COMPILER_AR",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "LLVM archiver"
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-ar.exe"
+		},
+		{
+			"name" : "CMAKE_ASM_COMPILER_RANLIB",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Generate index for LLVM archive"
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-ranlib.exe"
+		},
+		{
+			"name" : "CMAKE_ASM_COMPILER_WORKS",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : ""
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "1"
+		},
+		{
 			"name" : "CMAKE_ASM_FLAGS",
 			"properties" : 
 			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
 				{
 					"name" : "HELPSTRING",
 					"value" : "Flags used by the compiler during all build types."
@@ -314,6 +378,10 @@
 			"properties" : 
 			[
 				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
 					"name" : "HELPSTRING",
 					"value" : "Flags used by the compiler during debug builds."
 				}
@@ -322,9 +390,29 @@
 			"value" : ""
 		},
 		{
+			"name" : "CMAKE_ASM_FLAGS_MINSIZEREL",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Flags used by the ASM compiler during MINSIZEREL builds."
+				}
+			],
+			"type" : "STRING",
+			"value" : "-Os -DNDEBUG"
+		},
+		{
 			"name" : "CMAKE_ASM_FLAGS_RELEASE",
 			"properties" : 
 			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
 				{
 					"name" : "HELPSTRING",
 					"value" : "Flags used by the compiler during release builds."
@@ -332,6 +420,22 @@
 			],
 			"type" : "STRING",
 			"value" : ""
+		},
+		{
+			"name" : "CMAKE_ASM_FLAGS_RELWITHDEBINFO",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Flags used by the ASM compiler during RELWITHDEBINFO builds."
+				}
+			],
+			"type" : "STRING",
+			"value" : "-O2 -g -DNDEBUG"
 		},
 		{
 			"name" : "CMAKE_BUILD_TYPE",
@@ -355,7 +459,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a"
+			"value" : "c:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -1167,7 +1271,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\build\\intermediates\\cxx\\Debug\\1f2w92y4\\obj\\arm64-v8a"
+			"value" : "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\build\\intermediates\\cxx\\Debug\\1f2w92y4\\obj\\armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1439,7 +1543,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\build\\intermediates\\cxx\\Debug\\1f2w92y4\\obj\\arm64-v8a"
+			"value" : "C:\\Users\\mnsnn\\Documents\\SAAS\\GBAEmu\\app\\build\\intermediates\\cxx\\Debug\\1f2w92y4\\obj\\armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -2579,7 +2683,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "0.10-main-14-1eab610-dirty"
+			"value" : "0.10-main-15-5c78cc2-dirty"
 		},
 		{
 			"name" : "_GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX",
@@ -2603,7 +2707,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/26/libandroid.so"
+			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/libandroid.so"
 		},
 		{
 			"name" : "linkroom_mgba_LIB_DEPENDS",
@@ -2627,7 +2731,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a"
+			"value" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a"
 		},
 		{
 			"name" : "linkroom_native_IS_TOP_LEVEL",
@@ -2663,7 +2767,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/26/liblog.so"
+			"value" : "C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/liblog.so"
 		},
 		{
 			"name" : "mGBA_BINARY_DIR",
@@ -2675,7 +2779,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a/mgba"
+			"value" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba"
 		},
 		{
 			"name" : "mGBA_IS_TOP_LEVEL",

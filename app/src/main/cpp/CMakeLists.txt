@@ -59,6 +59,9 @@ add_library(
     placeholder_renderer.cpp
     "${MGBA_UPSTREAM_DIR}/src/gba/sio/lockstep.c"
     linkroom_core/emulator_session.cpp
+    linkroom_core/link/local_link_session.cpp
+    linkroom_core/link/linked_emulator_slot.cpp
+    linkroom_core/link/link_scheduler.cpp
     linkroom_core/mgba_core_adapter.cpp
     linkroom_core/save_paths.cpp
     linkroom_core/video_frame_buffer.cpp

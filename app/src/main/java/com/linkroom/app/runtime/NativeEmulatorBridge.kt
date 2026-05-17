@@ -226,6 +226,44 @@ object NativeEmulatorBridge {
         }
     }
 
+    /**
+     * Hidden Phase 1B diagnostic. Not exposed in normal app UX.
+     */
+    fun startLocalLinkTest(primaryRomPath: String, secondaryRomPath: String, baseTestDir: String): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping local link test because native library is unavailable.")
+            return "local link failed: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeStartLocalLinkTest(primaryRomPath, secondaryRomPath, baseTestDir)
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: startLocalLinkTest", error)
+        }.getOrElse { error ->
+            "local link failed: ${error.javaClass.simpleName}"
+        }
+    }
+
+    fun stopLocalLinkTest() = callNative("stopLocalLinkTest") {
+        nativeStopLocalLinkTest()
+    }
+
+    fun getLocalLinkStatus(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            return "local link unavailable: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeGetLocalLinkStatus()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: getLocalLinkStatus", error)
+        }.getOrElse { error ->
+            "local link status unavailable: ${error.javaClass.simpleName}"
+        }
+    }
+
     private inline fun callNative(operation: String, block: () -> Unit): Boolean {
         val failure = loadFailure
         if (failure != null) {
@@ -258,4 +296,11 @@ object NativeEmulatorBridge {
     private external fun nativeGetFastForwardStatus(): String
     private external fun nativeGetCoreStatus(): String
     private external fun nativeRunLocalLinkSmokeTest(): String
+    private external fun nativeStartLocalLinkTest(
+        primaryRomPath: String,
+        secondaryRomPath: String,
+        baseTestDir: String
+    ): String
+    private external fun nativeStopLocalLinkTest()
+    private external fun nativeGetLocalLinkStatus(): String
 }

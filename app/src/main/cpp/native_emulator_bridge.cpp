@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "emulator_session.h"
+#include "link/local_link_session.h"
 #include "mgba_core_adapter.h"
 #include "placeholder_renderer.h"
 
@@ -23,6 +24,7 @@ ANativeWindow* gWindow = nullptr;
 int gWidth = 0;
 int gHeight = 0;
 linkroom::EmulatorSession gSession;
+linkroom::LocalLinkSession gLocalLinkSession;
 std::thread* gEmulationThread = nullptr;
 std::atomic<bool> gStopEmulationThread{false};
 std::atomic<bool> gFastForwardEnabled{false};
@@ -419,5 +421,57 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRunLocalLinkSmokeTest(J
     linkroom::MgbaCoreAdapter adapter;
     const std::string status = adapter.localLinkSmokeStatus();
     __android_log_print(ANDROID_LOG_INFO, kTag, "%s", status.c_str());
+    return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeStartLocalLinkTest(
+    JNIEnv* env,
+    jobject,
+    jstring primary_rom_path,
+    jstring secondary_rom_path,
+    jstring base_test_dir
+) {
+    if (primary_rom_path == nullptr || secondary_rom_path == nullptr || base_test_dir == nullptr) {
+        return env->NewStringUTF("local link failed: missing start parameter");
+    }
+
+    const char* primaryChars = env->GetStringUTFChars(primary_rom_path, nullptr);
+    const char* secondaryChars = env->GetStringUTFChars(secondary_rom_path, nullptr);
+    const char* baseChars = env->GetStringUTFChars(base_test_dir, nullptr);
+    std::string primary = primaryChars != nullptr ? primaryChars : "";
+    std::string secondary = secondaryChars != nullptr ? secondaryChars : "";
+    std::string base = baseChars != nullptr ? baseChars : "";
+    if (primaryChars != nullptr) {
+        env->ReleaseStringUTFChars(primary_rom_path, primaryChars);
+    }
+    if (secondaryChars != nullptr) {
+        env->ReleaseStringUTFChars(secondary_rom_path, secondaryChars);
+    }
+    if (baseChars != nullptr) {
+        env->ReleaseStringUTFChars(base_test_dir, baseChars);
+    }
+
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "hidden local link start requested: primary=%s secondary=%s base=%s",
+        primary.c_str(),
+        secondary.c_str(),
+        base.c_str()
+    );
+    const std::string status = gLocalLinkSession.start(primary, secondary, base);
+    return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeStopLocalLinkTest(JNIEnv*, jobject) {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "hidden local link stop requested");
+    gLocalLinkSession.stop();
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetLocalLinkStatus(JNIEnv* env, jobject) {
+    const std::string status = gLocalLinkSession.status();
     return env->NewStringUTF(status.c_str());
 }

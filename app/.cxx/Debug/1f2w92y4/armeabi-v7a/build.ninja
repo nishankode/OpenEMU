@@ -81,6 +81,30 @@ build CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o: CXX_C
   OBJECT_DIR = CMakeFiles\linkroom_native.dir
   OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core
 
+build CMakeFiles/linkroom_native.dir/linkroom_core/link/local_link_session.cpp.o: CXX_COMPILER__linkroom_native_Debug C$:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core/link/local_link_session.cpp || cmake_object_order_depends_target_linkroom_native
+  DEFINES = -Dlinkroom_native_EXPORTS
+  DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\link\local_link_session.cpp.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/include -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/include
+  OBJECT_DIR = CMakeFiles\linkroom_native.dir
+  OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core\link
+
+build CMakeFiles/linkroom_native.dir/linkroom_core/link/linked_emulator_slot.cpp.o: CXX_COMPILER__linkroom_native_Debug C$:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core/link/linked_emulator_slot.cpp || cmake_object_order_depends_target_linkroom_native
+  DEFINES = -Dlinkroom_native_EXPORTS
+  DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\link\linked_emulator_slot.cpp.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/include -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/include
+  OBJECT_DIR = CMakeFiles\linkroom_native.dir
+  OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core\link
+
+build CMakeFiles/linkroom_native.dir/linkroom_core/link/link_scheduler.cpp.o: CXX_COMPILER__linkroom_native_Debug C$:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core/link/link_scheduler.cpp || cmake_object_order_depends_target_linkroom_native
+  DEFINES = -Dlinkroom_native_EXPORTS
+  DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\link\link_scheduler.cpp.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC
+  INCLUDES = -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/include -IC:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/include
+  OBJECT_DIR = CMakeFiles\linkroom_native.dir
+  OBJECT_FILE_DIR = CMakeFiles\linkroom_native.dir\linkroom_core\link
+
 build CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o: CXX_COMPILER__linkroom_native_Debug C$:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp/linkroom_core/mgba_core_adapter.cpp || cmake_object_order_depends_target_linkroom_native
   DEFINES = -Dlinkroom_native_EXPORTS
   DEP_FILE = CMakeFiles\linkroom_native.dir\linkroom_core\mgba_core_adapter.cpp.o.d
@@ -113,7 +137,7 @@ build CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o: CXX
 #############################################
 # Link the shared library C:\Users\mnsnn\Documents\SAAS\GBAEmu\app\build\intermediates\cxx\Debug\1f2w92y4\obj\armeabi-v7a\liblinkroom_native.so
 
-build C$:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so: CXX_SHARED_LIBRARY_LINKER__linkroom_native_Debug CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o CMakeFiles/linkroom_native.dir/C_/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/gba/sio/lockstep.c.o CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/save_paths.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o | mgba/liblinkroom_mgba.a C$:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/liblog.so C$:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/libandroid.so || mgba/liblinkroom_mgba.a
+build C$:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so: CXX_SHARED_LIBRARY_LINKER__linkroom_native_Debug CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o CMakeFiles/linkroom_native.dir/placeholder_renderer.cpp.o CMakeFiles/linkroom_native.dir/C_/Users/mnsnn/Documents/SAAS/GBAEmu/third_party/mgba/upstream/src/gba/sio/lockstep.c.o CMakeFiles/linkroom_native.dir/linkroom_core/emulator_session.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/link/local_link_session.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/link/linked_emulator_slot.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/link/link_scheduler.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/mgba_core_adapter.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/save_paths.cpp.o CMakeFiles/linkroom_native.dir/linkroom_core/video_frame_buffer.cpp.o | mgba/liblinkroom_mgba.a C$:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/liblog.so C$:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/libandroid.so || mgba/liblinkroom_mgba.a
   LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info
   LINK_FLAGS = -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments
   LINK_LIBRARIES = mgba/liblinkroom_mgba.a  C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/liblog.so  C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/26/libandroid.so  -lm  -latomic -lm
