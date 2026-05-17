@@ -1,8 +1,9 @@
 package com.linkroom.app.feature.emulator
 
+import android.graphics.SurfaceTexture
 import android.util.Log
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.view.Surface
+import android.view.TextureView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -18,45 +19,49 @@ fun EmulatorSurface(
     runtime: EmulatorRuntime,
     modifier: Modifier = Modifier
 ) {
-    val surfaceViewRef = remember { AtomicReference<SurfaceView?>(null) }
-    val callback = remember(runtime) {
-        object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                Log.i(TAG, "Surface created.")
-                runtime.attachSurface(holder.surface)
-            }
-
-            override fun surfaceChanged(
-                holder: SurfaceHolder,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-                Log.i(TAG, "Surface changed: $width x $height")
+    val textureViewRef = remember { AtomicReference<TextureView?>(null) }
+    val attachedSurfaceRef = remember { AtomicReference<Surface?>(null) }
+    val listener = remember(runtime) {
+        object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
+                Log.i(TAG, "Texture surface available: $width x $height")
+                val surface = Surface(surfaceTexture)
+                attachedSurfaceRef.getAndSet(surface)?.release()
+                runtime.attachSurface(surface)
                 runtime.resize(width, height)
             }
 
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                Log.i(TAG, "Surface destroyed.")
-                runtime.detachSurface()
+            override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
+                Log.i(TAG, "Texture surface changed: $width x $height")
+                runtime.resize(width, height)
             }
+
+            override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
+                Log.i(TAG, "Texture surface destroyed.")
+                runtime.detachSurface()
+                attachedSurfaceRef.getAndSet(null)?.release()
+                return true
+            }
+
+            override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = Unit
         }
     }
 
     AndroidView(
         modifier = modifier,
         factory = { context ->
-            SurfaceView(context).apply {
-                holder.addCallback(callback)
-                surfaceViewRef.set(this)
+            TextureView(context).apply {
+                surfaceTextureListener = listener
+                textureViewRef.set(this)
             }
         }
     )
 
-    DisposableEffect(callback, runtime) {
+    DisposableEffect(listener, runtime) {
         onDispose {
-            surfaceViewRef.getAndSet(null)?.holder?.removeCallback(callback)
+            textureViewRef.getAndSet(null)?.surfaceTextureListener = null
             runtime.detachSurface()
+            attachedSurfaceRef.getAndSet(null)?.release()
         }
     }
 }

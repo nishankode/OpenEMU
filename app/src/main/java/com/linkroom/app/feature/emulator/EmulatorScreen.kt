@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +46,18 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.linkroom.app.feature.library.RomHandle
 import com.linkroom.app.runtime.EmulatorRuntime
+import com.linkroom.app.ui.theme.AppAccent
+import com.linkroom.app.ui.theme.AppBackground
+import com.linkroom.app.ui.theme.AppBorder
+import com.linkroom.app.ui.theme.AppCard
+import com.linkroom.app.ui.theme.AppShapes
+import com.linkroom.app.ui.theme.AppSpacing
+import com.linkroom.app.ui.theme.AppSurface
+import com.linkroom.app.ui.theme.AppSurfaceHigh
+import com.linkroom.app.ui.theme.AppTextPrimary
+import com.linkroom.app.ui.theme.AppTextSecondary
+import com.linkroom.app.ui.theme.AppWarning
+import com.linkroom.app.ui.theme.StatusPill
 import android.util.Log
 import java.io.File
 import java.text.DateFormat
@@ -160,14 +175,23 @@ fun EmulatorScreen(
     }
 
     Scaffold(
+        containerColor = AppBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Player") },
+                title = {
+                    Text(
+                        "Player",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     TextButton(onClick = onBack) {
                         Text("Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppSurface)
             )
         }
     ) { paddingValues ->
@@ -175,7 +199,7 @@ fun EmulatorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.Top
         ) {
             if (rom == null) {
@@ -194,89 +218,99 @@ fun EmulatorScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .background(Color.Black)
+                    .height(238.dp)
+                    .background(AppSurface, AppShapes.large)
+                    .border(1.dp, AppBorder, AppShapes.large)
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
             ) {
                 EmulatorSurface(
                     runtime = runtime,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(240f / 160f)
+                        .background(Color.Black, RoundedCornerShape(10.dp))
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            FastForwardControls(
-                enabled = fastForwardEnabled,
-                onToggle = {
-                    fastForwardEnabled = !fastForwardEnabled
-                    fastForwardStatus = runtime.setFastForward(fastForwardEnabled)
-                    audioStatus = if (fastForwardEnabled) "audio muted" else runtime.audioStatusMessage
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            SaveStateControls(
-                selectedSlot = selectedStateSlot,
-                slotSummary = ::slotSummary,
-                stateStatus = stateStatus,
-                pendingOverwriteSlot = pendingOverwriteSlot,
-                onSlotSelected = { slot ->
-                    selectedStateSlot = slot
-                    pendingOverwriteSlot = null
-                    stateStatus = "State: Slot $slot selected"
-                },
-                onSave = {
-                    val gameRootPath = rom.gameRootPath
-                    if (gameRootPath == null) {
-                        stateStatus = "State save failed: state directory unavailable"
-                    } else if (stateFile(selectedStateSlot)?.exists() == true && pendingOverwriteSlot != selectedStateSlot) {
-                        pendingOverwriteSlot = selectedStateSlot
-                        stateStatus = "State: Slot $selectedStateSlot already exists"
-                    } else {
-                        val slot = selectedStateSlot
-                        pendingOverwriteSlot = null
-                        stateStatus = "State: saving Slot $slot"
-                        coroutineScope.launch {
-                            val result = withContext(Dispatchers.IO) {
-                                runtime.saveState(slot, gameRootPath)
-                            }
-                            stateStatus = result
-                            slotSummaryRefresh++
-                        }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FastForwardControls(
+                    enabled = fastForwardEnabled,
+                    onToggle = {
+                        fastForwardEnabled = !fastForwardEnabled
+                        fastForwardStatus = runtime.setFastForward(fastForwardEnabled)
+                        audioStatus = if (fastForwardEnabled) "audio muted" else runtime.audioStatusMessage
                     }
-                },
-                onLoad = {
-                    val gameRootPath = rom.gameRootPath
-                    if (gameRootPath == null) {
-                        stateStatus = "State load failed: state directory unavailable"
-                    } else {
-                        val slot = selectedStateSlot
-                        pendingOverwriteSlot = null
-                        stateStatus = "State: loading Slot $slot"
-                        coroutineScope.launch {
-                            val result = withContext(Dispatchers.IO) {
-                                runtime.loadState(slot, gameRootPath)
-                            }
-                            stateStatus = result
-                            bootStatus = runtime.runtimeStatusMessage
-                            saveStatus = runtime.saveStatusMessage
-                            audioStatus = if (fastForwardEnabled) "audio muted" else runtime.audioStatusMessage
-                        }
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            GbaControlOverlay(runtime = runtime)
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = { showDebug = !showDebug }) {
-                Text(if (showDebug) "Hide Debug" else "Debug")
-            }
-            if (showDebug) {
-                DebugPanel(
-                    nativeStatus = runtime.nativeStatusMessage,
-                    bootStatus = bootStatus,
-                    saveStatus = saveStatus,
-                    audioStatus = audioStatus,
-                    fastForwardStatus = fastForwardStatus,
-                    stateStatus = stateStatus
                 )
+                SaveStateControls(
+                    selectedSlot = selectedStateSlot,
+                    slotSummary = ::slotSummary,
+                    stateStatus = stateStatus,
+                    pendingOverwriteSlot = pendingOverwriteSlot,
+                    onSlotSelected = { slot ->
+                        selectedStateSlot = slot
+                        pendingOverwriteSlot = null
+                        stateStatus = "State: Slot $slot selected"
+                    },
+                    onSave = {
+                        val gameRootPath = rom.gameRootPath
+                        if (gameRootPath == null) {
+                            stateStatus = "State save failed: state directory unavailable"
+                        } else if (stateFile(selectedStateSlot)?.exists() == true && pendingOverwriteSlot != selectedStateSlot) {
+                            pendingOverwriteSlot = selectedStateSlot
+                            stateStatus = "State: Slot $selectedStateSlot already exists"
+                        } else {
+                            val slot = selectedStateSlot
+                            pendingOverwriteSlot = null
+                            stateStatus = "State: saving Slot $slot"
+                            coroutineScope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    runtime.saveState(slot, gameRootPath)
+                                }
+                                stateStatus = result
+                                slotSummaryRefresh++
+                            }
+                        }
+                    },
+                    onLoad = {
+                        val gameRootPath = rom.gameRootPath
+                        if (gameRootPath == null) {
+                            stateStatus = "State load failed: state directory unavailable"
+                        } else {
+                            val slot = selectedStateSlot
+                            pendingOverwriteSlot = null
+                            stateStatus = "State: loading Slot $slot"
+                            coroutineScope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    runtime.loadState(slot, gameRootPath)
+                                }
+                                stateStatus = result
+                                bootStatus = runtime.runtimeStatusMessage
+                                saveStatus = runtime.saveStatusMessage
+                                audioStatus = if (fastForwardEnabled) "audio muted" else runtime.audioStatusMessage
+                            }
+                        }
+                    }
+                )
+                GbaControlOverlay(runtime = runtime)
+                TextButton(onClick = { showDebug = !showDebug }) {
+                    Text(if (showDebug) "Hide Debug" else "Debug")
+                }
+                if (showDebug) {
+                    DebugPanel(
+                        nativeStatus = runtime.nativeStatusMessage,
+                        bootStatus = bootStatus,
+                        saveStatus = saveStatus,
+                        audioStatus = audioStatus,
+                        fastForwardStatus = fastForwardStatus,
+                        stateStatus = stateStatus
+                    )
+                }
             }
         }
     }
@@ -294,6 +328,7 @@ private fun CompactStatusBar(
         Text(
             text = romName,
             style = MaterialTheme.typography.titleMedium,
+            color = AppTextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -312,23 +347,7 @@ private fun CompactStatusBar(
 
 @Composable
 private fun StatusChip(text: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(30.dp)
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(6.dp)
-            )
-            .padding(horizontal = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+    StatusPill(text = text, modifier = modifier, color = if (text.contains("failed", true)) AppWarning else AppAccent)
 }
 
 @Composable
@@ -343,7 +362,8 @@ private fun DebugPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
+            .background(AppSurfaceHigh, RoundedCornerShape(10.dp))
+            .border(1.dp, AppBorder, RoundedCornerShape(10.dp))
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -361,6 +381,7 @@ private fun DebugLine(label: String, value: String) {
     Text(
         text = "$label: $value",
         style = MaterialTheme.typography.bodySmall,
+        color = AppTextSecondary,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
@@ -371,13 +392,27 @@ private fun FastForwardControls(
     enabled: Boolean,
     onToggle: () -> Unit
 ) {
+    AppCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Fast-forward",
+                color = AppTextPrimary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            StatusPill(text = if (enabled) "FF 2x" else "Off", color = AppAccent, filled = enabled)
+        }
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedButton(onClick = onToggle) {
-            Text(if (enabled) "FF 2x On" else "FF Off")
+            Text(if (enabled) "Disable 2x" else "Enable 2x")
         }
     }
 }
@@ -392,6 +427,7 @@ private fun SaveStateControls(
     onSave: () -> Unit,
     onLoad: () -> Unit
 ) {
+    AppCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp)) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -410,6 +446,7 @@ private fun SaveStateControls(
         Text(
             text = "Slot $selectedSlot: ${slotSummary(selectedSlot)}",
             style = MaterialTheme.typography.labelMedium,
+            color = AppTextSecondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -428,9 +465,11 @@ private fun SaveStateControls(
         Text(
             text = stateStatus,
             style = MaterialTheme.typography.labelMedium,
+            color = AppTextSecondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
     }
 }
 
@@ -534,12 +573,12 @@ private fun ControlButton(
         modifier = Modifier
             .then(if (wide) Modifier.width(84.dp).height(42.dp) else Modifier.size(52.dp))
             .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = if (label == "A" || label == "B") AppAccent.copy(alpha = 0.24f) else AppSurfaceHigh,
                 shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
             )
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline,
+                color = if (label == "A" || label == "B") AppAccent.copy(alpha = 0.68f) else AppBorder,
                 shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
             )
             .pointerInput(bit) {
@@ -559,7 +598,7 @@ private fun ControlButton(
             },
         contentAlignment = Alignment.Center
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
+        Text(text = label, style = MaterialTheme.typography.labelLarge, color = AppTextPrimary)
     }
 }
 
@@ -579,12 +618,14 @@ private const val TAG = "EmulatorScreen"
 private fun MissingRomContent(onBack: () -> Unit) {
     Text(
         text = "Selected file is no longer available",
-        style = MaterialTheme.typography.titleLarge
+        style = MaterialTheme.typography.titleLarge,
+        color = AppTextPrimary
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
         text = "Return to the library and select an available imported file.",
-        style = MaterialTheme.typography.bodyMedium
+        style = MaterialTheme.typography.bodyMedium,
+        color = AppTextSecondary
     )
     Spacer(modifier = Modifier.height(16.dp))
     OutlinedButton(onClick = onBack) {

@@ -468,6 +468,13 @@ private fun GameTile(
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
+                            text = { Text(if (rom.isFavorite) "Remove favorite" else "Add favorite") },
+                            onClick = {
+                                menuExpanded = false
+                                onToggleFavorite(rom.id)
+                            }
+                        )
+                        DropdownMenuItem(
                             text = { Text("Refresh cover art") },
                             onClick = {
                                 menuExpanded = false
@@ -569,9 +576,10 @@ private fun FavoriteButton(isFavorite: Boolean, onClick: () -> Unit) {
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
         Text(
-            text = if (isFavorite) "★" else "☆",
+            text = if (isFavorite) "Fav" else "Add",
             color = if (isFavorite) AccentBlue else TextSecondary,
-            fontSize = 18.sp
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -626,20 +634,20 @@ private fun LibraryBottomNavigation(
         NavigationBarItem(
             selected = true,
             onClick = { },
-            icon = { Text("▦") },
+            icon = { Text("L") },
             label = { Text("Library") }
         )
         NavigationBarItem(
             selected = false,
             enabled = hasPlayableRom,
             onClick = onPlay,
-            icon = { Text("▶") },
+            icon = { Text("P") },
             label = { Text("Play") }
         )
         NavigationBarItem(
             selected = false,
             onClick = onSettings,
-            icon = { Text("⚙") },
+            icon = { Text("S") },
             label = { Text("Settings") }
         )
     }
@@ -700,7 +708,7 @@ private fun RomHandle.playSummary(): String {
         1 -> "1 play"
         else -> "$playCount plays"
     }
-    return "$lastPlayed • $countText"
+    return "$lastPlayed - $countText"
 }
 
 private fun shortDate(timestamp: Long): String {

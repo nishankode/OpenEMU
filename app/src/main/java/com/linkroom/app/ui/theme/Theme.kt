@@ -1,25 +1,28 @@
 package com.linkroom.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val LightColors = lightColorScheme(
-    primary = Accent,
-    onPrimary = Paper,
-    secondary = AccentDark,
-    background = Paper,
-    onBackground = Ink,
-    surface = Paper,
-    onSurface = Ink,
-    surfaceVariant = SurfaceMuted,
-    tertiary = Warning
+private val DarkColors = darkColorScheme(
+    primary = AppAccent,
+    onPrimary = AppTextPrimary,
+    secondary = AppAccentIndigo,
+    background = AppBackground,
+    onBackground = AppTextPrimary,
+    surface = AppSurface,
+    onSurface = AppTextPrimary,
+    surfaceVariant = AppSurfaceHigh,
+    onSurfaceVariant = AppTextSecondary,
+    outline = AppBorder,
+    tertiary = AppWarning,
+    error = AppDanger
 )
 
 @Composable
 fun LinkRoomTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = LightColors,
+        colorScheme = DarkColors,
         typography = AppTypography,
         content = content
     )
