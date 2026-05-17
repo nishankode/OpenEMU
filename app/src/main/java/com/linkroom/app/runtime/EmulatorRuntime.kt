@@ -260,7 +260,17 @@ class EmulatorRuntime {
     private fun stopAudio() {
         audioPaused.set(true)
         audioRunning.set(false)
-        audioThread?.join(AUDIO_THREAD_JOIN_MS)
+        runCatching {
+            audioTrack?.pause()
+            audioTrack?.flush()
+        }.onFailure { error ->
+            Log.w(TAG, "Audio pre-release pause failed.", error)
+        }
+        runCatching {
+            audioThread?.join(AUDIO_THREAD_JOIN_MS)
+        }.onFailure { error ->
+            Log.w(TAG, "Audio thread join failed.", error)
+        }
         audioThread = null
         runCatching {
             audioTrack?.stop()

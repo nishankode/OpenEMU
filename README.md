@@ -1,6 +1,6 @@
 # LinkRoom
 
-Phase 0 Android scaffold for a legal-safe retro handheld emulator app.
+Android feasibility MVP for a legal-safe retro handheld emulator app.
 
 ## Current Status
 
@@ -21,6 +21,19 @@ This project is a feasibility scaffold only. It includes:
 - Basic 2x fast-forward
 
 This phase can boot, render, play basic audio, fast-forward at 2x, accept basic touch input, persist normal in-game battery saves, and save/load manual states for user-provided `.gba` files through mGBA. No rewind, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
+
+## Supported Emulator Features
+
+- Import user-owned `.gba` files through Android Storage Access Framework.
+- Copy `.gba` files into app-private storage for native loading.
+- Boot user-provided `.gba` files with mGBA.
+- Render video to the native `SurfaceView`.
+- Use on-screen D-pad, A/B, L/R, Start, and Select controls.
+- Play basic game audio in normal-speed mode.
+- Use 2x fast-forward. Audio is muted while fast-forward is active.
+- Use normal in-game battery saves.
+- Use three manual save-state slots.
+- Restore imported ROM metadata after app restart.
 
 ## Requirements
 
@@ -77,6 +90,25 @@ For app state and native runtime logs:
 ```powershell
 adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer MgbaCoreAdapter GameLibraryViewModel RomPicker AudioTrack
 ```
+
+## Manual Test Checklist
+
+- Fresh install launches onboarding once.
+- Importing a valid `.gba` adds it to the library.
+- Reopening the app restores the imported ROM metadata.
+- Opening a ROM boots mGBA and renders video.
+- On-screen controls affect gameplay.
+- Audio is audible at normal speed.
+- Toggling 2x fast-forward visibly speeds up gameplay.
+- Turning fast-forward off returns to normal speed and audio resumes.
+- In-game battery save creates/updates `files/games/{rom_id}/battery/current.sav`.
+- Reopening the same ROM loads the previous in-game battery save.
+- Saving Slot 1 writes `files/games/{rom_id}/states/slot_1.ss`.
+- Loading Slot 1 returns to the saved point.
+- Loading an empty slot shows an error and does not crash.
+- Background/resume keeps the emulator stable.
+- Back navigation releases the emulator and flushes battery save data.
+- Surface destroy/recreate during rotation or app switch does not crash.
 
 ## Notes
 
