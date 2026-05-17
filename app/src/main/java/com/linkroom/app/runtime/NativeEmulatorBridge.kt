@@ -229,7 +229,12 @@ object NativeEmulatorBridge {
     /**
      * Hidden Phase 1B diagnostic. Not exposed in normal app UX.
      */
-    fun startLocalLinkTest(primaryRomPath: String, secondaryRomPath: String, baseTestDir: String): String {
+    fun startLocalLinkTest(
+        primaryRomPath: String,
+        secondaryRomPath: String,
+        baseTestDir: String,
+        schedulerMode: Int = 0
+    ): String {
         val failure = loadFailure
         if (failure != null) {
             Log.w(TAG, "Skipping local link test because native library is unavailable.")
@@ -237,7 +242,7 @@ object NativeEmulatorBridge {
         }
 
         return runCatching {
-            nativeStartLocalLinkTest(primaryRomPath, secondaryRomPath, baseTestDir)
+            nativeStartLocalLinkTest(primaryRomPath, secondaryRomPath, baseTestDir, schedulerMode)
         }.onFailure { error ->
             Log.e(TAG, "Native operation failed: startLocalLinkTest", error)
         }.getOrElse { error ->
@@ -335,7 +340,8 @@ object NativeEmulatorBridge {
     private external fun nativeStartLocalLinkTest(
         primaryRomPath: String,
         secondaryRomPath: String,
-        baseTestDir: String
+        baseTestDir: String,
+        schedulerMode: Int
     ): String
     private external fun nativeStopLocalLinkTest()
     private external fun nativeGetLocalLinkStatus(): String

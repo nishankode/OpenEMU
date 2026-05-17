@@ -52,6 +52,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.viewinterop.AndroidView
@@ -77,6 +79,8 @@ import com.linkroom.app.ui.theme.AppTextSecondary
 import com.linkroom.app.ui.theme.AppWarning
 import com.linkroom.app.ui.theme.StatusPill
 import java.io.File
+import java.text.DateFormat
+import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -92,6 +96,7 @@ fun LocalLinkDebugScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val playableRoms = remember(importedRoms) {
@@ -111,6 +116,7 @@ fun LocalLinkDebugScreen(
     var clockTick by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var activeViewSlot by remember { mutableStateOf(1) }
     var activeInputSlot by remember { mutableStateOf(1) }
+    var schedulerMode by remember { mutableStateOf(0) }
     var savePrepStatus by remember { mutableStateOf("Save prep: choose ROMs, then copy saves before starting.") }
     var saveInfoRefresh by remember { mutableLongStateOf(0L) }
 
@@ -189,11 +195,11 @@ fun LocalLinkDebugScreen(
         return runCatching {
             val existed = target.exists()
             val deleted = !existed || target.delete()
-            Log.i(TAG, "Reset link save slot $slot: path=${target.absolutePath} existed=$existed deleted=$deleted")
-            if (deleted) "Slot $slot link save reset." else "Slot $slot reset failed: could not delete file."
+            Log.i(TAG, "Clear link save slot $slot: path=${target.absolutePath} existed=$existed deleted=$deleted")
+            if (deleted) "Slot $slot link save cleared." else "Slot $slot clear failed: could not delete file."
         }.getOrElse { error ->
-            Log.w(TAG, "Unable to reset link save slot $slot", error)
-            "Slot $slot reset failed: ${error.javaClass.simpleName}"
+            Log.w(TAG, "Unable to clear link save slot $slot", error)
+            "Slot $slot clear failed: ${error.javaClass.simpleName}"
         }.also {
             refreshSaveInfo()
         }
@@ -305,6 +311,11 @@ fun LocalLinkDebugScreen(
                             roms = playableRoms,
                             onSelected = { selectedSlot2Id = it.id }
                         )
+                        SchedulerModeSelector(
+                            selectedMode = schedulerMode,
+                            enabled = !isRunning && !starting,
+                            onSelected = { schedulerMode = it }
+                        )
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically
@@ -323,7 +334,12 @@ fun LocalLinkDebugScreen(
                                     Log.i(TAG, "Starting local link debug: slot1=$primaryPath slot2=$secondaryPath base=$baseTestDir")
                                     scope.launch {
                                         status = withContext(Dispatchers.IO) {
-                                            NativeEmulatorBridge.startLocalLinkTest(primaryPath, secondaryPath, baseTestDir)
+                                            NativeEmulatorBridge.startLocalLinkTest(
+                                                primaryPath,
+                                                secondaryPath,
+                                                baseTestDir,
+                                                schedulerMode
+                                            )
                                         }
                                         starting = false
                                         if (status.contains("running", ignoreCase = true)) {
@@ -343,6 +359,7 @@ fun LocalLinkDebugScreen(
                                     NativeEmulatorBridge.stopLocalLinkTest()
                                     status = NativeEmulatorBridge.getLocalLinkStatus()
                                     startedAtMillis = 0L
+                                    refreshSaveInfo()
                                 },
                                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
                             ) {
@@ -416,14 +433,14 @@ fun LocalLinkDebugScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Use copied saves so both slots can reach the in-game link room. Main saves are only read, never modified.",
+                        text = "Main save is one protected source for the selected ROM. Slot 1 and Slot 2 link saves are independent debug copies.",
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTextSecondary
                     )
-                    DetailRow("Slot 1 main save", fileSummary(slot1MainSave))
-                    DetailRow("Slot 1 link save", fileSummary(slot1LinkSave))
-                    DetailRow("Slot 2 main save", fileSummary(slot2MainSave))
-                    DetailRow("Slot 2 link save", fileSummary(slot2LinkSave))
+                    DetailRow("Slot 1 main save", saveFileSummary(slot1MainSave))
+                    DetailRow("Slot 1 link save", saveFileSummary(slot1LinkSave))
+                    DetailRow("Slot 2 main save", saveFileSummary(slot2MainSave))
+                    DetailRow("Slot 2 link save", saveFileSummary(slot2LinkSave))
                     Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
                         OutlinedButton(
                             enabled = !isRunning && slot1Rom != null,
@@ -440,6 +457,11 @@ fun LocalLinkDebugScreen(
                             Text("Copy main save to Slot 2")
                         }
                     }
+                    Text(
+                        text = "Copying to both slots makes both players use the same save/profile.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppWarning
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
                         OutlinedButton(
                             enabled = !isRunning && slot1Rom != null && slot2Rom != null,
@@ -457,7 +479,7 @@ fun LocalLinkDebugScreen(
                             enabled = !isRunning,
                             onClick = { savePrepStatus = resetLinkSave(1) }
                         ) {
-                            Text("Reset Slot 1 link save")
+                            Text("Clear Slot 1 link save")
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
@@ -465,9 +487,14 @@ fun LocalLinkDebugScreen(
                             enabled = !isRunning,
                             onClick = { savePrepStatus = resetLinkSave(2) }
                         ) {
-                            Text("Reset Slot 2 link save")
+                            Text("Clear Slot 2 link save")
                         }
                     }
+                    Text(
+                        text = "To make a different Slot 2 player: clear Slot 2 link save, start the link test, switch Controls to Slot 2, create a new in-game profile, save in-game, then stop the test.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextSecondary
+                    )
                     Text(
                         text = savePrepStatus,
                         style = MaterialTheme.typography.bodySmall,
@@ -478,34 +505,71 @@ fun LocalLinkDebugScreen(
 
             AppCard {
                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
-                    Text(
-                        text = "Link Activity",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AppTextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Link Activity",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = AppTextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(
+                            onClick = {
+                                clipboardManager.setText(
+                                    AnnotatedString(
+                                        buildDebugSnapshot(
+                                            status,
+                                            runtimeSeconds,
+                                            activeViewSlot,
+                                            activeInputSlot,
+                                            schedulerMode
+                                        )
+                                    )
+                                )
+                            }
+                        ) {
+                            Text("Copy Debug Snapshot")
+                        }
+                    }
                     Text(
                         text = "Switch Viewing and Controls to guide both games toward the in-game link room, then watch for SIO mode and transfer activity.",
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTextSecondary
                     )
                     DetailRow("Runtime", formatDuration(runtimeSeconds))
+                    DetailRow("Scheduler mode", schedulerModeLabel(extractStatusValue(status, "schedulerMode"), schedulerMode))
                     DetailRow("Active input", "Slot $activeInputSlot")
                     DetailRow("Active view", "Slot $activeViewSlot")
-                    DetailRow("Frame count", extractStatusValue(status, "slot1Frames") ?: "not available")
+                    DetailRow("Scheduler ticks", extractStatusValue(status, "ticks") ?: "not available")
+                    DetailRow("Scheduler tick rate", "${extractStatusValue(status, "tickRate") ?: "0"}/s")
+                    DetailRow("Slot 1 frames", extractStatusValue(status, "slot1Frames") ?: "not available")
                     DetailRow("Slot 2 frames", extractStatusValue(status, "slot2Frames") ?: "not available")
+                    DetailRow("Frame delta", extractStatusValue(status, "frameDelta") ?: "not available")
                     DetailRow("Slot 1 rendered", extractStatusValue(status, "slot1Rendered") ?: "not available")
                     DetailRow("Slot 2 rendered", extractStatusValue(status, "slot2Rendered") ?: "not available")
                     DetailRow("SIO attached", extractStatusValue(status, "attached") ?: "not available")
                     DetailRow("SIO mode 1", extractStatusValue(status, "sioMode1") ?: "not available")
                     DetailRow("SIO mode 2", extractStatusValue(status, "sioMode2") ?: "not available")
+                    DetailRow("SIOCNT 1", extractStatusValue(status, "siocnt1") ?: "not available")
+                    DetailRow("SIOCNT 2", extractStatusValue(status, "siocnt2") ?: "not available")
+                    DetailRow("RCNT 1", extractStatusValue(status, "rcnt1") ?: "not available")
+                    DetailRow("RCNT 2", extractStatusValue(status, "rcnt2") ?: "not available")
+                    DetailRow("Active driver 1", extractStatusValue(status, "activeDriver1") ?: "not available")
+                    DetailRow("Active driver 2", extractStatusValue(status, "activeDriver2") ?: "not available")
                     DetailRow("Transfer phase", extractStatusValue(status, "transferPhase") ?: "not available")
                     DetailRow("Transfer attempts", extractStatusValue(status, "transferAttempts") ?: "0")
                     DetailRow("Transfer completes", extractStatusValue(status, "transferCompletions") ?: "0")
+                    DetailRow("Last transfer", "${extractStatusValue(status, "lastTransferMsAgo") ?: "0"} ms ago")
                     DetailRow("Lockstep signals", extractStatusValue(status, "lockstepSignals") ?: "0")
                     DetailRow("Lockstep waits", extractStatusValue(status, "lockstepWaits") ?: "0")
-                    DetailRow("Scheduler ticks", extractStatusValue(status, "ticks") ?: "not available")
-                    DetailRow("Stall warning", if (status.contains("fell behind", ignoreCase = true)) "detected" else "none reported")
+                    DetailRow("Signal rate", "${extractStatusValue(status, "signalRate") ?: "0"}/s")
+                    DetailRow("Wait rate", "${extractStatusValue(status, "waitRate") ?: "0"}/s")
+                    DetailRow("Slices last tick", extractStatusValue(status, "slicesLastTick") ?: "not available")
+                    DetailRow("Slice cap hits", extractStatusValue(status, "sliceLimitHits") ?: "0")
+                    DetailRow("Link warning", extractStatusValue(status, "linkWarning") ?: "none")
                     Text(
                         text = status,
                         style = MaterialTheme.typography.bodySmall,
@@ -615,6 +679,58 @@ private fun SlotToggleRow(
             OutlinedButton(onClick = { onSelected(slot) }) {
                 Text(if (selectedSlot == slot) "Slot $slot*" else "Slot $slot")
             }
+        }
+    }
+}
+
+@Composable
+private fun SchedulerModeSelector(
+    selectedMode: Int,
+    enabled: Boolean,
+    onSelected: (Int) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)) {
+        Text(
+            text = "Scheduler mode",
+            style = MaterialTheme.typography.labelLarge,
+            color = AppTextSecondary,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedButton(
+                modifier = Modifier.weight(1f),
+                enabled = enabled,
+                onClick = { onSelected(0) }
+            ) {
+                Text(if (selectedMode == 0) "Stable*" else "Stable")
+            }
+            OutlinedButton(
+                modifier = Modifier.weight(1f),
+                enabled = enabled,
+                onClick = { onSelected(1) }
+            ) {
+                Text(if (selectedMode == 1) "Experimental*" else "Experimental")
+            }
+        }
+        Text(
+            text = if (selectedMode == 0) {
+                "Stable uses the previous playable two-core frame scheduler."
+            } else {
+                "Experimental uses smaller lockstep slices for timing diagnostics and may run slower."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = AppTextSecondary
+        )
+        if (!enabled) {
+            Text(
+                text = "Stop the link test before changing scheduler mode.",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppWarning
+            )
         }
     }
 }
@@ -850,14 +966,40 @@ private fun linkSaveFile(slotRoot: String): File {
     return File(File(slotRoot, "battery"), "current.sav")
 }
 
-private fun fileSummary(file: File?): String {
+private fun saveFileSummary(file: File?): String {
     if (file == null) {
         return "missing: no ROM save root"
     }
     return if (file.exists()) {
-        "exists (${file.length()} bytes) - ${file.absolutePath}"
+        val modifiedAt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            .format(Date(file.lastModified()))
+        "exists (${file.length()} bytes), modified $modifiedAt - ${file.absolutePath}"
     } else {
         "missing - ${file.absolutePath}"
+    }
+}
+
+private fun buildDebugSnapshot(
+    status: String,
+    runtimeSeconds: Long,
+    activeViewSlot: Int,
+    activeInputSlot: Int,
+    selectedSchedulerMode: Int
+): String {
+    return buildString {
+        appendLine("Local Link Debug Snapshot")
+        appendLine("Runtime: ${formatDuration(runtimeSeconds)}")
+        appendLine("Scheduler: ${schedulerModeLabel(extractStatusValue(status, "schedulerMode"), selectedSchedulerMode)}")
+        appendLine("Viewing: Slot $activeViewSlot")
+        appendLine("Controls: Slot $activeInputSlot")
+        appendLine("Status: $status")
+    }
+}
+
+private fun schedulerModeLabel(statusValue: String?, selectedMode: Int): String {
+    return when (statusValue ?: if (selectedMode == 1) "experimental_lockstep" else "stable") {
+        "experimental_lockstep" -> "Experimental lockstep"
+        else -> "Stable"
     }
 }
 

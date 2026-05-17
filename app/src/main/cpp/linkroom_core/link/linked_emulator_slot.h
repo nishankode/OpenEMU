@@ -30,6 +30,7 @@ public:
     );
     void reset();
     void runFrame();
+    bool runFrameSlice();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     void setInputMask(std::uint32_t inputMask);
     void release();
@@ -39,10 +40,14 @@ public:
     const std::string& saveRoot() const;
     std::uint64_t framesRun() const;
     int sioMode() const;
+    int sioCnt() const;
+    int rCnt() const;
+    bool hasActiveSioDriver() const;
     GBA* gba() const;
 
 private:
     bool attachBatterySave(std::string* error);
+    void flushBatterySave();
 
     mCore* core_ = nullptr;
     std::vector<std::uint32_t> videoBuffer_;

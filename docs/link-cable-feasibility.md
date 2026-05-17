@@ -448,3 +448,58 @@ Recommended Phase 1G:
 - Record whether SIO mode changes and transfer counters move during cable-room entry.
 - If counters stay idle, inspect mGBA SIO driver installation order and the specific modes used by the target game.
 - If counters move but games do not connect, investigate scheduler timing and lockstep callback behavior.
+
+## Phase 1H Findings
+
+Phase 1H focuses on the hidden local-link handshake stall observed when both linked games reach an in-game waiting room but do not progress.
+
+Key discovery:
+
+- The local-link slots already install mGBA's multiplayer driver and the shared normal serial driver. In mGBA, `SIO_NORMAL_8` and `SIO_NORMAL_32` map to the same `normal` driver slot, so the existing `SIO_NORMAL_32` install covers both normal serial modes. `SIO_JOYBUS` is not implemented by the mGBA GBA lockstep node and is left uninstalled for this local cable path.
+- The riskier behavior was scheduler granularity. The hidden scheduler previously called `runFrame()` for Slot 1 and then `runFrame()` for Slot 2. mGBA's lockstep SIO code uses early exits around transfer phases, but a full-frame call can continue running a core through multiple lockstep events before the paired core gets a chance to catch up.
+
+Native changes:
+
+- Local Link Debug now advances Slot 1 and Slot 2 in smaller alternating `runLoop()` slices until each slot produces one video frame, with a hard slice cap per scheduler tick.
+- Normal single-player emulation still uses the existing single-core runtime path and is untouched.
+- The link status string now exposes deeper diagnostics:
+  - scheduler tick rate
+  - frame delta between slots
+  - last slices used
+  - slice cap hit count
+  - SIO mode for both slots
+  - SIOCNT/RCNT for both slots
+  - active SIO driver presence for both slots
+  - transfer attempt/complete counts
+  - time since last transfer
+  - lockstep signal/wait rates
+  - computed link warning such as `sio_idle_no_recent_transfers`, `core_frame_delta`, `scheduler_starvation`, `slice_cap_hit`, or `lockstep_wait_without_signal`
+
+Debug UI changes:
+
+- The hidden Local Link Debug screen shows the new SIO, scheduler, and lockstep values in the Link Activity panel.
+- A `Copy Debug Snapshot` button copies the current runtime, view/input target, and raw native status string for log sharing.
+
+Current status:
+
+- Phase 1H is a timing/instrumentation fix, not a proven trade-room completion yet.
+- If the waiting-room test still stalls, the new counters should identify whether transfers stop entirely, whether transfers continue without game progress, whether one slot drifts ahead, or whether scheduler/lockstep signaling is starving.
+
+Recommended Phase 1I:
+
+- Repeat the same in-game waiting-room test with the Phase 1H scheduler.
+- Capture the copied debug snapshot after 30 seconds, 2 minutes, and 5 minutes at the waiting screen.
+- If `sio_idle_no_recent_transfers` appears, inspect mGBA's multiplayer ready/busy bits and the game's selected serial mode.
+- If `core_frame_delta` or `slice_cap_hit` appears, tune the scheduler slice cap or move to a true two-thread lockstep condition-variable implementation.
+- If transfers continue but game progress does not, instrument serial payload/register transitions around `REG_SIOMLT_SEND`, `REG_SIOMULTI*`, and `REG_SIOCNT` in a local wrapper or a documented mGBA patch.
+
+## Phase 1H Scheduler Regression Fix
+
+Manual testing showed that the Phase 1H smaller-slice scheduler made Slot 2 extremely slow. That confirmed the slice scheduler is useful as a timing experiment, but not acceptable as the default debug harness scheduler.
+
+The hidden Local Link Debug screen now supports two scheduler modes:
+
+- `Stable`: default mode. Uses the previous full-frame Slot 1 then Slot 2 scheduler behavior that kept both slots playable during manual control.
+- `Experimental lockstep`: opt-in mode. Uses the Phase 1H smaller alternating `runLoop()` slice scheduler for deeper timing experiments. It may be slower, but remains available for investigating lockstep behavior.
+
+The mode can only be changed before starting a link test. The Link Activity panel keeps the Phase 1H instrumentation in both modes, including SIO modes, transfer counts, frame counts, rendered counts, frame delta, lockstep signal/wait rates, scheduler tick rate, warnings, and debug snapshot copy.

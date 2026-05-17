@@ -429,7 +429,8 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeStartLocalLinkTest(
     jobject,
     jstring primary_rom_path,
     jstring secondary_rom_path,
-    jstring base_test_dir
+    jstring base_test_dir,
+    jint scheduler_mode
 ) {
     if (primary_rom_path == nullptr || secondary_rom_path == nullptr || base_test_dir == nullptr) {
         return env->NewStringUTF("local link failed: missing start parameter");
@@ -454,12 +455,16 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeStartLocalLinkTest(
     __android_log_print(
         ANDROID_LOG_INFO,
         kTag,
-        "hidden local link start requested: primary=%s secondary=%s base=%s",
+        "hidden local link start requested: primary=%s secondary=%s base=%s schedulerMode=%d",
         primary.c_str(),
         secondary.c_str(),
-        base.c_str()
+        base.c_str(),
+        scheduler_mode
     );
-    const std::string status = gLocalLinkSession.start(primary, secondary, base);
+    const auto mode = scheduler_mode == 1
+        ? linkroom::LocalLinkSchedulerMode::ExperimentalLockstep
+        : linkroom::LocalLinkSchedulerMode::Stable;
+    const std::string status = gLocalLinkSession.start(primary, secondary, base, mode);
     return env->NewStringUTF(status.c_str());
 }
 

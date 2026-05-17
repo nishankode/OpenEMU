@@ -16,6 +16,11 @@ struct ANativeWindow;
 
 namespace linkroom {
 
+enum class LocalLinkSchedulerMode : int {
+    Stable = 0,
+    ExperimentalLockstep = 1
+};
+
 class LocalLinkSession {
 public:
     LocalLinkSession();
@@ -24,7 +29,12 @@ public:
     LocalLinkSession(const LocalLinkSession&) = delete;
     LocalLinkSession& operator=(const LocalLinkSession&) = delete;
 
-    std::string start(const std::string& primaryRomPath, const std::string& secondaryRomPath, const std::string& baseTestDir);
+    std::string start(
+        const std::string& primaryRomPath,
+        const std::string& secondaryRomPath,
+        const std::string& baseTestDir,
+        LocalLinkSchedulerMode schedulerMode
+    );
     void stop();
     std::string status() const;
     void setInputMask(int slot, std::uint32_t inputMask);
@@ -45,8 +55,13 @@ private:
     bool prepareLockstep();
     void releaseLockstep();
     void schedulerTick();
+    void runStableSchedulerTickLocked();
+    int runExperimentalSchedulerTickLocked();
     std::string statusLocked() const;
     void releaseSlot1WindowLocked();
+    void resetDiagnosticsLocked();
+    void updateDiagnosticsLocked(int transferPhase, int sioMode1, int sioMode2, int slicesUsed);
+    std::string linkWarningLocked(std::int64_t nowMs) const;
 
     static void lockCallback(mLockstep* lockstep);
     static void unlockCallback(mLockstep* lockstep);
@@ -67,6 +82,7 @@ private:
     LockstepContext lockstepContext_;
     std::string status_ = "local link: idle";
     std::string baseTestDir_;
+    LocalLinkSchedulerMode schedulerMode_ = LocalLinkSchedulerMode::Stable;
     ANativeWindow* slot1Window_ = nullptr;
     int slot1WindowWidth_ = 0;
     int slot1WindowHeight_ = 0;
@@ -74,6 +90,18 @@ private:
     std::uint64_t slot2RenderedFrames_ = 0;
     std::uint64_t transferAttemptCount_ = 0;
     std::uint64_t transferCompleteCount_ = 0;
+    std::uint64_t sliceLimitHitCount_ = 0;
+    std::uint64_t lastSignalSample_ = 0;
+    std::uint64_t lastWaitSample_ = 0;
+    std::uint64_t lastTickSample_ = 0;
+    std::uint64_t signalRatePerSecond_ = 0;
+    std::uint64_t waitRatePerSecond_ = 0;
+    std::uint64_t schedulerTickRatePerSecond_ = 0;
+    int lastSlicesUsed_ = 0;
+    std::int64_t startMonotonicMs_ = 0;
+    std::int64_t lastTransferActivityMs_ = 0;
+    std::int64_t lastModeChangeMs_ = 0;
+    std::int64_t lastMetricsSampleMs_ = 0;
     int activeRenderSlot_ = 1;
     int previousTransferPhase_ = 0;
     int previousSioMode1_ = -1;

@@ -12,11 +12,14 @@
 #include <android/native_window.h>
 #include <algorithm>
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <fcntl.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 namespace linkroom {
 namespace {
@@ -162,9 +165,16 @@ bool LinkedEmulatorSlot::load(
         return false;
     }
 
+    // mGBA maps SIO_NORMAL_8 and SIO_NORMAL_32 to the same "normal" driver slot.
+    // Installing SIO_NORMAL_32 here intentionally covers both normal serial modes.
     GBASIOSetDriver(&gba->sio, &node->d, SIO_MULTI);
     GBASIOSetDriver(&gba->sio, &node->d, SIO_NORMAL_32);
-    __android_log_print(ANDROID_LOG_INFO, kTag, "slot %d SIO drivers installed", slotIndex);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "slot %d SIO drivers installed: MULTI and NORMAL_8/NORMAL_32",
+        slotIndex
+    );
 
     core_->reset(core_);
     loaded_ = true;
@@ -186,10 +196,64 @@ bool LinkedEmulatorSlot::attachBatterySave(std::string* error) {
         batteryPath_.c_str(),
         attached ? "success" : "failure"
     );
-    if (!attached && error) {
-        *error = "unable to attach battery save";
+    if (!attached && !isFile(batteryPath_)) {
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            kTag,
+            "battery save is missing; slot will start with a fresh in-game save and flush to this path on release"
+        );
+        return true;
     }
     return attached;
+}
+
+void LinkedEmulatorSlot::flushBatterySave() {
+    if (core_ == nullptr || !loaded_ || batteryPath_.empty()) {
+        return;
+    }
+    if (!ensureDirectory(saveRoot_ + "/battery")) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "link slot save flush failed: battery directory unavailable");
+        return;
+    }
+
+    void* saveData = nullptr;
+    const size_t saveSize = core_->savedataClone(core_, &saveData);
+    if (saveSize == 0 || saveData == nullptr) {
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            kTag,
+            "link slot save flush skipped: no battery data yet path=%s",
+            batteryPath_.c_str()
+        );
+        if (saveData != nullptr) {
+            std::free(saveData);
+        }
+        return;
+    }
+
+    const std::string tempPath = batteryPath_ + ".tmp";
+    bool wrote = false;
+    {
+        std::ofstream output(tempPath, std::ios::binary | std::ios::trunc);
+        if (output) {
+            output.write(static_cast<const char*>(saveData), static_cast<std::streamsize>(saveSize));
+            wrote = output.good();
+        }
+    }
+    std::free(saveData);
+
+    if (!wrote || rename(tempPath.c_str(), batteryPath_.c_str()) != 0) {
+        unlink(tempPath.c_str());
+        __android_log_print(ANDROID_LOG_WARN, kTag, "link slot save flush failed: path=%s", batteryPath_.c_str());
+        return;
+    }
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "link slot save flushed: path=%s size=%zu",
+        batteryPath_.c_str(),
+        saveSize
+    );
 }
 
 void LinkedEmulatorSlot::reset() {
@@ -206,6 +270,24 @@ void LinkedEmulatorSlot::runFrame() {
     core_->setKeys(core_, inputMask_);
     core_->runFrame(core_);
     ++framesRun_;
+}
+
+bool LinkedEmulatorSlot::runFrameSlice() {
+    if (core_ == nullptr || !loaded_) {
+        return false;
+    }
+    auto* board = gba();
+    if (board == nullptr) {
+        return false;
+    }
+    const auto frameBefore = board->video.frameCounter;
+    core_->setKeys(core_, inputMask_);
+    core_->runLoop(core_);
+    if (board->video.frameCounter != frameBefore) {
+        ++framesRun_;
+        return true;
+    }
+    return false;
 }
 
 bool LinkedEmulatorSlot::renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight) {
@@ -273,6 +355,7 @@ void LinkedEmulatorSlot::setInputMask(std::uint32_t inputMask) {
 
 void LinkedEmulatorSlot::release() {
     if (core_ != nullptr) {
+        flushBatterySave();
         auto* gba = static_cast<GBA*>(core_->board);
         if (gba != nullptr) {
             GBASIOSetDriver(&gba->sio, nullptr, SIO_NORMAL_32);
@@ -307,6 +390,21 @@ std::uint64_t LinkedEmulatorSlot::framesRun() const {
 int LinkedEmulatorSlot::sioMode() const {
     auto* board = gba();
     return board != nullptr ? static_cast<int>(board->sio.mode) : -1;
+}
+
+int LinkedEmulatorSlot::sioCnt() const {
+    auto* board = gba();
+    return board != nullptr ? static_cast<int>(board->sio.siocnt) : -1;
+}
+
+int LinkedEmulatorSlot::rCnt() const {
+    auto* board = gba();
+    return board != nullptr ? static_cast<int>(board->sio.rcnt) : -1;
+}
+
+bool LinkedEmulatorSlot::hasActiveSioDriver() const {
+    auto* board = gba();
+    return board != nullptr && board->sio.activeDriver != nullptr;
 }
 
 GBA* LinkedEmulatorSlot::gba() const {

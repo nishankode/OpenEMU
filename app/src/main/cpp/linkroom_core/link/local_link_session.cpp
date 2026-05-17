@@ -4,6 +4,7 @@
 #include <android/native_window.h>
 #include <algorithm>
 #include <cerrno>
+#include <chrono>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -11,6 +12,14 @@
 namespace linkroom {
 namespace {
 constexpr const char* kTag = "LocalLinkSession";
+constexpr int kMaxSlicesPerSchedulerTick = 512;
+constexpr std::int64_t kNoTransferWarningMs = 5000;
+
+std::int64_t steadyNowMs() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    ).count();
+}
 
 bool isDirectory(const std::string& path) {
     struct stat info {};
@@ -61,24 +70,23 @@ LocalLinkSession::~LocalLinkSession() {
 std::string LocalLinkSession::start(
     const std::string& primaryRomPath,
     const std::string& secondaryRomPath,
-    const std::string& baseTestDir
+    const std::string& baseTestDir,
+    LocalLinkSchedulerMode schedulerMode
 ) {
     stop();
     std::lock_guard<std::mutex> lock(mutex_);
     baseTestDir_ = baseTestDir;
-    slot1RenderedFrames_ = 0;
-    slot2RenderedFrames_ = 0;
-    transferAttemptCount_ = 0;
-    transferCompleteCount_ = 0;
-    previousTransferPhase_ = 0;
-    previousSioMode1_ = -1;
-    previousSioMode2_ = -1;
-    lockstepContext_.signalCount.store(0, std::memory_order_relaxed);
-    lockstepContext_.waitCount.store(0, std::memory_order_relaxed);
+    schedulerMode_ = schedulerMode;
+    resetDiagnosticsLocked();
     const std::string slot1Root = baseTestDir_ + "/slot_1";
     const std::string slot2Root = baseTestDir_ + "/slot_2";
 
-    __android_log_print(ANDROID_LOG_INFO, kTag, "start local link test");
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "start local link test schedulerMode=%s",
+        schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep ? "experimental_lockstep" : "stable"
+    );
     __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 ROM path: %s", primaryRomPath.c_str());
     __android_log_print(ANDROID_LOG_INFO, kTag, "slot 2 ROM path: %s", secondaryRomPath.c_str());
     __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 save root: %s", slot1Root.c_str());
@@ -240,11 +248,18 @@ void LocalLinkSession::schedulerTick() {
     }
     slot1_.setInputMask(slot1InputMask_.load(std::memory_order_relaxed));
     slot2_.setInputMask(slot2InputMask_.load(std::memory_order_relaxed));
-    slot1_.runFrame();
-    slot2_.runFrame();
+    int slicesUsed = 0;
+    if (schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep) {
+        slicesUsed = runExperimentalSchedulerTickLocked();
+    } else {
+        runStableSchedulerTickLocked();
+    }
+    lastSlicesUsed_ = slicesUsed;
     const int transferPhase = static_cast<int>(lockstep_.d.transferActive);
+
     if (previousTransferPhase_ == 0 && transferPhase != 0) {
         ++transferAttemptCount_;
+        lastTransferActivityMs_ = steadyNowMs();
         __android_log_print(
             ANDROID_LOG_INFO,
             kTag,
@@ -254,6 +269,7 @@ void LocalLinkSession::schedulerTick() {
         );
     } else if (previousTransferPhase_ != 0 && transferPhase == 0) {
         ++transferCompleteCount_;
+        lastTransferActivityMs_ = steadyNowMs();
         __android_log_print(
             ANDROID_LOG_INFO,
             kTag,
@@ -268,11 +284,14 @@ void LocalLinkSession::schedulerTick() {
     if (sioMode1 != previousSioMode1_) {
         __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 SIO mode changed: %d -> %d", previousSioMode1_, sioMode1);
         previousSioMode1_ = sioMode1;
+        lastModeChangeMs_ = steadyNowMs();
     }
     if (sioMode2 != previousSioMode2_) {
         __android_log_print(ANDROID_LOG_INFO, kTag, "slot 2 SIO mode changed: %d -> %d", previousSioMode2_, sioMode2);
         previousSioMode2_ = sioMode2;
+        lastModeChangeMs_ = steadyNowMs();
     }
+    updateDiagnosticsLocked(transferPhase, sioMode1, sioMode2, slicesUsed);
 
     if (slot1Window_ != nullptr && slot1WindowWidth_ > 0 && slot1WindowHeight_ > 0) {
         LinkedEmulatorSlot& renderSlot = activeRenderSlot_ == 2 ? slot2_ : slot1_;
@@ -288,7 +307,8 @@ void LocalLinkSession::schedulerTick() {
         __android_log_print(
             ANDROID_LOG_INFO,
             kTag,
-            "scheduler running: slot1Frames=%llu slot2Frames=%llu renderSlot=%d attached=%d transferPhase=%d attempts=%llu completions=%llu sio1=%d sio2=%d signals=%llu waits=%llu",
+            "scheduler running: mode=%s slot1Frames=%llu slot2Frames=%llu renderSlot=%d attached=%d transferPhase=%d attempts=%llu completions=%llu sio1=%d sio2=%d signals=%llu waits=%llu",
+            schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep ? "experimental_lockstep" : "stable",
             static_cast<unsigned long long>(slot1_.framesRun()),
             static_cast<unsigned long long>(slot2_.framesRun()),
             activeRenderSlot_,
@@ -304,13 +324,148 @@ void LocalLinkSession::schedulerTick() {
     }
 }
 
+void LocalLinkSession::runStableSchedulerTickLocked() {
+    slot1_.runFrame();
+    slot2_.runFrame();
+}
+
+int LocalLinkSession::runExperimentalSchedulerTickLocked() {
+    const std::uint64_t startFrames1 = slot1_.framesRun();
+    const std::uint64_t startFrames2 = slot2_.framesRun();
+    int slicesUsed = 0;
+    while ((slot1_.framesRun() == startFrames1 || slot2_.framesRun() == startFrames2) &&
+           slicesUsed < kMaxSlicesPerSchedulerTick) {
+        if (slot1_.framesRun() == startFrames1) {
+            slot1_.runFrameSlice();
+            ++slicesUsed;
+        }
+        if (slot2_.framesRun() == startFrames2) {
+            slot2_.runFrameSlice();
+            ++slicesUsed;
+        }
+    }
+    lastSlicesUsed_ = slicesUsed;
+    if (slicesUsed >= kMaxSlicesPerSchedulerTick) {
+        ++sliceLimitHitCount_;
+        __android_log_print(
+            ANDROID_LOG_WARN,
+            kTag,
+            "local link scheduler slice cap hit: slices=%d slot1Frames=%llu slot2Frames=%llu hits=%llu",
+            slicesUsed,
+            static_cast<unsigned long long>(slot1_.framesRun()),
+            static_cast<unsigned long long>(slot2_.framesRun()),
+            static_cast<unsigned long long>(sliceLimitHitCount_)
+        );
+    }
+    return slicesUsed;
+}
+
+void LocalLinkSession::resetDiagnosticsLocked() {
+    slot1RenderedFrames_ = 0;
+    slot2RenderedFrames_ = 0;
+    transferAttemptCount_ = 0;
+    transferCompleteCount_ = 0;
+    sliceLimitHitCount_ = 0;
+    previousTransferPhase_ = 0;
+    previousSioMode1_ = -1;
+    previousSioMode2_ = -1;
+    lastSignalSample_ = 0;
+    lastWaitSample_ = 0;
+    lastTickSample_ = 0;
+    signalRatePerSecond_ = 0;
+    waitRatePerSecond_ = 0;
+    schedulerTickRatePerSecond_ = 0;
+    lastSlicesUsed_ = 0;
+    const std::int64_t now = steadyNowMs();
+    startMonotonicMs_ = now;
+    lastTransferActivityMs_ = now;
+    lastModeChangeMs_ = now;
+    lastMetricsSampleMs_ = now;
+    lockstepContext_.signalCount.store(0, std::memory_order_relaxed);
+    lockstepContext_.waitCount.store(0, std::memory_order_relaxed);
+}
+
+void LocalLinkSession::updateDiagnosticsLocked(int transferPhase, int sioMode1, int sioMode2, int slicesUsed) {
+    const std::int64_t now = steadyNowMs();
+    const std::int64_t elapsed = now - lastMetricsSampleMs_;
+    if (elapsed < 1000) {
+        return;
+    }
+
+    const std::uint64_t signals = lockstepContext_.signalCount.load(std::memory_order_relaxed);
+    const std::uint64_t waits = lockstepContext_.waitCount.load(std::memory_order_relaxed);
+    const std::uint64_t ticks = scheduler_.ticks();
+    signalRatePerSecond_ = ((signals - lastSignalSample_) * 1000) / static_cast<std::uint64_t>(elapsed);
+    waitRatePerSecond_ = ((waits - lastWaitSample_) * 1000) / static_cast<std::uint64_t>(elapsed);
+    schedulerTickRatePerSecond_ = ((ticks - lastTickSample_) * 1000) / static_cast<std::uint64_t>(elapsed);
+    lastSignalSample_ = signals;
+    lastWaitSample_ = waits;
+    lastTickSample_ = ticks;
+    lastMetricsSampleMs_ = now;
+
+    const std::string warning = linkWarningLocked(now);
+    if (warning != "none") {
+        __android_log_print(
+            ANDROID_LOG_WARN,
+            kTag,
+            "local link diagnostic warning: %s transferPhase=%d sio1=%d sio2=%d slices=%d signalRate=%llu waitRate=%llu tickRate=%llu",
+            warning.c_str(),
+            transferPhase,
+            sioMode1,
+            sioMode2,
+            slicesUsed,
+            static_cast<unsigned long long>(signalRatePerSecond_),
+            static_cast<unsigned long long>(waitRatePerSecond_),
+            static_cast<unsigned long long>(schedulerTickRatePerSecond_)
+        );
+    }
+}
+
+std::string LocalLinkSession::linkWarningLocked(std::int64_t nowMs) const {
+    if (!running_) {
+        return "none";
+    }
+    const int frameDelta = static_cast<int>(slot1_.framesRun() > slot2_.framesRun()
+        ? slot1_.framesRun() - slot2_.framesRun()
+        : slot2_.framesRun() - slot1_.framesRun());
+    if (frameDelta > 2) {
+        return "core_frame_delta";
+    }
+    if (schedulerTickRatePerSecond_ < 30 && scheduler_.isRunning()) {
+        return "scheduler_starvation";
+    }
+    if (sliceLimitHitCount_ > 0 && lastSlicesUsed_ >= kMaxSlicesPerSchedulerTick) {
+        return "slice_cap_hit";
+    }
+    if (lockstep_.d.transferActive == 0 &&
+        slot1_.hasActiveSioDriver() &&
+        slot2_.hasActiveSioDriver() &&
+        (nowMs - lastTransferActivityMs_) > kNoTransferWarningMs &&
+        transferAttemptCount_ > 0) {
+        return "sio_idle_no_recent_transfers";
+    }
+    if (lockstepContext_.waitCount.load(std::memory_order_relaxed) > 0 &&
+        waitRatePerSecond_ > 0 &&
+        signalRatePerSecond_ == 0) {
+        return "lockstep_wait_without_signal";
+    }
+    return "none";
+}
+
 std::string LocalLinkSession::statusLocked() const {
+    const std::int64_t now = steadyNowMs();
+    const int frameDelta = static_cast<int>(slot1_.framesRun() > slot2_.framesRun()
+        ? slot1_.framesRun() - slot2_.framesRun()
+        : slot2_.framesRun() - slot1_.framesRun());
     std::ostringstream out;
     out << status_
+        << " schedulerMode=" << (schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep ? "experimental_lockstep" : "stable")
         << " scheduler=" << (scheduler_.isRunning() ? "running" : "stopped")
         << " ticks=" << scheduler_.ticks()
+        << " tickRate=" << schedulerTickRatePerSecond_
         << " slot1Frames=" << slot1_.framesRun()
         << " slot2Frames=" << slot2_.framesRun()
+        << " frameDelta=" << frameDelta
         << " slot1Rendered=" << slot1RenderedFrames_
         << " slot2Rendered=" << slot2RenderedFrames_
         << " renderSlot=" << activeRenderSlot_
@@ -318,10 +473,23 @@ std::string LocalLinkSession::statusLocked() const {
         << " transferPhase=" << static_cast<int>(lockstep_.d.transferActive)
         << " transferAttempts=" << transferAttemptCount_
         << " transferCompletions=" << transferCompleteCount_
+        << " lastTransferMsAgo=" << std::max<std::int64_t>(0, now - lastTransferActivityMs_)
         << " lockstepSignals=" << lockstepContext_.signalCount.load(std::memory_order_relaxed)
         << " lockstepWaits=" << lockstepContext_.waitCount.load(std::memory_order_relaxed)
+        << " signalRate=" << signalRatePerSecond_
+        << " waitRate=" << waitRatePerSecond_
         << " sioMode1=" << slot1_.sioMode()
-        << " sioMode2=" << slot2_.sioMode();
+        << " sioMode2=" << slot2_.sioMode()
+        << " siocnt1=" << slot1_.sioCnt()
+        << " siocnt2=" << slot2_.sioCnt()
+        << " rcnt1=" << slot1_.rCnt()
+        << " rcnt2=" << slot2_.rCnt()
+        << " activeDriver1=" << (slot1_.hasActiveSioDriver() ? "true" : "false")
+        << " activeDriver2=" << (slot2_.hasActiveSioDriver() ? "true" : "false")
+        << " lastModeMsAgo=" << std::max<std::int64_t>(0, now - lastModeChangeMs_)
+        << " slicesLastTick=" << lastSlicesUsed_
+        << " sliceLimitHits=" << sliceLimitHitCount_
+        << " linkWarning=" << linkWarningLocked(now);
     return out.str();
 }
 
