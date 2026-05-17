@@ -78,6 +78,26 @@ object NativeEmulatorBridge {
         nativeSetInputMask(inputMask)
     }
 
+    fun setFastForward(enabled: Boolean) = callNative("setFastForward") {
+        nativeSetFastForward(enabled)
+    }
+
+    fun getFastForwardStatus(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping getFastForwardStatus because native library is unavailable.")
+            return "fast-forward unavailable: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeGetFastForwardStatus()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: getFastForwardStatus", error)
+        }.getOrElse { error ->
+            "fast-forward status unavailable: ${error.javaClass.simpleName}"
+        }
+    }
+
     fun getRuntimeStatus(): String {
         val failure = loadFailure
         if (failure != null) {
@@ -176,10 +196,12 @@ object NativeEmulatorBridge {
     private external fun nativePause()
     private external fun nativeResume()
     private external fun nativeSetInputMask(inputMask: Int)
+    private external fun nativeSetFastForward(enabled: Boolean)
     private external fun nativeRelease()
     private external fun nativeGetRuntimeStatus(): String
     private external fun nativeGetSaveStatus(): String
     private external fun nativeGetAudioStatus(): String
     private external fun nativeReadAudio(buffer: ShortArray, maxSamples: Int): Int
+    private external fun nativeGetFastForwardStatus(): String
     private external fun nativeGetCoreStatus(): String
 }

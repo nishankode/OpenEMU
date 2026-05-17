@@ -44,6 +44,7 @@ public:
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     int readAudio(std::int16_t* output, int maxSamples);
     void setInputMask(std::uint32_t inputMask);
+    void setFastForward(bool enabled);
     std::string flushBatterySave();
     void pause();
     void resume();
@@ -52,6 +53,8 @@ public:
     bool isPaused() const;
     std::string saveStatus() const;
     std::string audioStatus() const;
+    bool isFastForwardEnabled() const;
+    std::string fastForwardStatus() const;
 
 private:
     void configureAudio();
@@ -74,6 +77,7 @@ private:
     size_t audioUnderruns_ = 0;
     std::uint32_t inputMask_ = 0;
     bool audioConfigured_ = false;
+    bool fastForwardEnabled_ = false;
     bool paused_ = true;
     bool romLoaded_ = false;
 };

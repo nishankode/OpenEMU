@@ -13,6 +13,8 @@ class EmulatorRuntime {
     private val surfaceAttached = AtomicBoolean(false)
     private val audioRunning = AtomicBoolean(false)
     private val audioPaused = AtomicBoolean(true)
+    private val fastForwardEnabled = AtomicBoolean(false)
+    private val audioMutedForFastForward = AtomicBoolean(false)
     private var audioTrack: AudioTrack? = null
     private var audioThread: Thread? = null
 
@@ -34,6 +36,9 @@ class EmulatorRuntime {
 
     val audioStatusMessage: String
         get() = NativeEmulatorBridge.getAudioStatus()
+
+    val fastForwardStatusMessage: String
+        get() = NativeEmulatorBridge.getFastForwardStatus()
 
     fun attachSurface(surface: Surface): Boolean {
         if (released.get()) {
@@ -101,9 +106,22 @@ class EmulatorRuntime {
         }
     }
 
+    fun setFastForward(enabled: Boolean): String {
+        if (released.get()) {
+            return "fast-forward unavailable: emulator runtime was already released"
+        }
+
+        fastForwardEnabled.set(enabled)
+        audioMutedForFastForward.set(enabled)
+        NativeEmulatorBridge.setFastForward(enabled)
+        Log.i(TAG, "Fast-forward ${if (enabled) "enabled" else "disabled"} at 2x; audioMuted=$enabled")
+        return NativeEmulatorBridge.getFastForwardStatus()
+    }
+
     fun release() {
         if (released.compareAndSet(false, true)) {
             NativeEmulatorBridge.setInputMask(0)
+            NativeEmulatorBridge.setFastForward(false)
             stopAudio()
             surfaceAttached.set(false)
             NativeEmulatorBridge.release()
@@ -158,6 +176,7 @@ class EmulatorRuntime {
 
         audioTrack = track
         audioPaused.set(false)
+        audioMutedForFastForward.set(fastForwardEnabled.get())
         Log.i(TAG, "Audio init: sampleRate=$AUDIO_SAMPLE_RATE minBufferBytes=$minBufferSize playbackBufferBytes=${minBufferSize * 2}")
 
         audioThread = Thread({
@@ -165,7 +184,7 @@ class EmulatorRuntime {
             runCatching {
                 track.play()
                 while (audioRunning.get()) {
-                    if (audioPaused.get()) {
+                    if (audioPaused.get() || audioMutedForFastForward.get()) {
                         Thread.sleep(AUDIO_IDLE_SLEEP_MS)
                         continue
                     }

@@ -24,6 +24,7 @@ public:
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     int readAudio(std::int16_t* output, int maxSamples);
     void setInputMask(std::uint32_t inputMask);
+    void setFastForward(bool enabled);
     std::string flushBatterySave();
     void pause();
     void resume();
@@ -35,6 +36,8 @@ public:
     std::string statusMessage() const;
     std::string saveStatus() const;
     std::string audioStatus() const;
+    int frameStepCount() const;
+    std::string fastForwardStatus() const;
 
 private:
     MgbaCoreAdapter coreAdapter_;

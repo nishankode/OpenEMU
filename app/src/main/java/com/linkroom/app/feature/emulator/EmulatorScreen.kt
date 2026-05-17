@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -63,6 +64,13 @@ fun EmulatorScreen(
     var audioStatus by remember(rom?.id) {
         mutableStateOf("audio: waiting for ROM load")
     }
+    var fastForwardEnabled by remember(rom?.id) {
+        mutableStateOf(false)
+    }
+    var fastForwardStatus by remember(rom?.id) {
+        mutableStateOf("fast-forward: off")
+    }
+    var showDebug by remember { mutableStateOf(false) }
 
     DisposableEffect(runtime, rom?.id) {
         bootStatus = "loading: preparing emulator runtime"
@@ -83,6 +91,7 @@ fun EmulatorScreen(
         }
         saveStatus = runtime.saveStatusMessage
         audioStatus = runtime.audioStatusMessage
+        fastForwardStatus = runtime.fastForwardStatusMessage
         onDispose { }
     }
 
@@ -98,17 +107,20 @@ fun EmulatorScreen(
                 Lifecycle.Event.ON_RESUME -> {
                     bootStatus = runtime.resume()
                     audioStatus = runtime.audioStatusMessage
+                    fastForwardStatus = runtime.fastForwardStatusMessage
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     bootStatus = runtime.pause()
                     saveStatus = runtime.saveStatusMessage
                     audioStatus = runtime.audioStatusMessage
+                    fastForwardStatus = runtime.fastForwardStatusMessage
                 }
                 Lifecycle.Event.ON_DESTROY -> {
                     runtime.release()
                     bootStatus = "released: emulator runtime resources released"
                     saveStatus = runtime.saveStatusMessage
                     audioStatus = runtime.audioStatusMessage
+                    fastForwardStatus = runtime.fastForwardStatusMessage
                 }
                 else -> Unit
             }
@@ -135,7 +147,7 @@ fun EmulatorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.Top
         ) {
             if (rom == null) {
@@ -143,15 +155,18 @@ fun EmulatorScreen(
                 return@Column
             }
 
-            Text(
-                text = rom.filename,
-                style = MaterialTheme.typography.titleLarge
+            CompactStatusBar(
+                romName = rom.filename,
+                bootStatus = bootStatus,
+                saveStatus = saveStatus,
+                audioStatus = audioStatus,
+                fastForwardStatus = fastForwardStatus
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(3f / 2f)
+                    .weight(1f)
                     .background(Color.Black)
             ) {
                 EmulatorSurface(
@@ -159,35 +174,157 @@ fun EmulatorScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = runtime.nativeStatusMessage,
-                style = MaterialTheme.typography.bodyLarge
+            Spacer(modifier = Modifier.height(8.dp))
+            FastForwardControls(
+                enabled = fastForwardEnabled,
+                onToggle = {
+                    fastForwardEnabled = !fastForwardEnabled
+                    fastForwardStatus = runtime.setFastForward(fastForwardEnabled)
+                    audioStatus = if (fastForwardEnabled) "audio muted" else runtime.audioStatusMessage
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "mGBA runtime status: $bootStatus",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Battery save status: $saveStatus",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Audio status: $audioStatus",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Video and basic audio run after a .gba loads. Placeholder rendering remains the fallback for empty or failed loads.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(16.dp))
             GbaControlOverlay(runtime = runtime)
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(onClick = { showDebug = !showDebug }) {
+                Text(if (showDebug) "Hide Debug" else "Debug")
+            }
+            if (showDebug) {
+                DebugPanel(
+                    nativeStatus = runtime.nativeStatusMessage,
+                    bootStatus = bootStatus,
+                    saveStatus = saveStatus,
+                    audioStatus = audioStatus,
+                    fastForwardStatus = fastForwardStatus
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun CompactStatusBar(
+    romName: String,
+    bootStatus: String,
+    saveStatus: String,
+    audioStatus: String,
+    fastForwardStatus: String
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = romName,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatusChip(text = compactRuntimeStatus(bootStatus), modifier = Modifier.weight(1f))
+            StatusChip(text = compactSaveStatus(saveStatus), modifier = Modifier.weight(1f))
+            StatusChip(text = compactAudioStatus(audioStatus), modifier = Modifier.weight(1f))
+            StatusChip(text = compactFastForwardStatus(fastForwardStatus), modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(text: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .height(30.dp)
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun DebugPanel(
+    nativeStatus: String,
+    bootStatus: String,
+    saveStatus: String,
+    audioStatus: String,
+    fastForwardStatus: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        DebugLine("Native", nativeStatus)
+        DebugLine("Runtime", bootStatus)
+        DebugLine("Save", saveStatus)
+        DebugLine("Audio", audioStatus)
+        DebugLine("Fast-forward", fastForwardStatus)
+    }
+}
+
+@Composable
+private fun DebugLine(label: String, value: String) {
+    Text(
+        text = "$label: $value",
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+@Composable
+private fun FastForwardControls(
+    enabled: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedButton(onClick = onToggle) {
+            Text(if (enabled) "FF 2x On" else "FF Off")
+        }
+    }
+}
+
+private fun compactRuntimeStatus(status: String): String = when {
+    status.contains("failed", ignoreCase = true) -> "Failed"
+    status.contains("paused", ignoreCase = true) -> "Paused"
+    status.contains("released", ignoreCase = true) -> "Closed"
+    status.contains("running", ignoreCase = true) -> "Running"
+    else -> "Loading"
+}
+
+private fun compactSaveStatus(status: String): String = when {
+    status.contains("failed", ignoreCase = true) -> "Save failed"
+    status.contains("flushed", ignoreCase = true) || status.contains("loaded", ignoreCase = true) || status.contains("file-backed", ignoreCase = true) -> "Save OK"
+    status.contains("no save", ignoreCase = true) -> "Save pending"
+    else -> "Save"
+}
+
+private fun compactAudioStatus(status: String): String = when {
+    status.contains("muted", ignoreCase = true) -> "Muted"
+    status.contains("paused", ignoreCase = true) -> "Audio pause"
+    status.contains("running", ignoreCase = true) || status.contains("initialized", ignoreCase = true) -> "Audio on"
+    else -> "Audio"
+}
+
+private fun compactFastForwardStatus(status: String): String = when {
+    status.contains("2x", ignoreCase = true) -> "FF 2x"
+    else -> "FF off"
 }
 
 @Composable

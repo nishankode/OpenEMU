@@ -59,6 +59,13 @@ void EmulatorSession::setInputMask(std::uint32_t inputMask) {
     coreAdapter_.setInputMask(inputMask);
 }
 
+void EmulatorSession::setFastForward(bool enabled) {
+    if (released_) {
+        return;
+    }
+    coreAdapter_.setFastForward(enabled);
+}
+
 std::string EmulatorSession::flushBatterySave() {
     if (released_) {
         return coreAdapter_.saveStatus();
@@ -118,6 +125,17 @@ std::string EmulatorSession::saveStatus() const {
 
 std::string EmulatorSession::audioStatus() const {
     return coreAdapter_.audioStatus();
+}
+
+int EmulatorSession::frameStepCount() const {
+    if (released_ || paused_ || !coreAdapter_.hasLoadedRom()) {
+        return 1;
+    }
+    return coreAdapter_.isFastForwardEnabled() ? 2 : 1;
+}
+
+std::string EmulatorSession::fastForwardStatus() const {
+    return coreAdapter_.fastForwardStatus();
 }
 
 } // namespace linkroom

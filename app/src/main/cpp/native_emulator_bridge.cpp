@@ -25,6 +25,7 @@ int gHeight = 0;
 linkroom::EmulatorSession gSession;
 std::thread* gEmulationThread = nullptr;
 std::atomic<bool> gStopEmulationThread{false};
+std::atomic<bool> gFastForwardEnabled{false};
 std::uint32_t gLastLoggedInputMask = 0;
 
 void release_window_locked() {
@@ -50,13 +51,31 @@ void emulation_thread_main() {
     __android_log_print(ANDROID_LOG_INFO, kTag, "emulation thread started");
     auto nextFrame = std::chrono::steady_clock::now();
     int renderedFrames = 0;
+    bool appliedFastForwardEnabled = false;
+    int pacingLogCountdown = 0;
 
     while (!gStopEmulationThread.load()) {
         bool rendered = false;
+        const bool requestedFastForward = gFastForwardEnabled.load(std::memory_order_relaxed);
         {
             std::lock_guard<std::mutex> lock(gMutex);
             if (!gStopEmulationThread.load() && gSession.hasLoadedRom() && !gSession.isPaused()) {
-                const bool advanced = gSession.runFrame();
+                if (requestedFastForward != appliedFastForwardEnabled) {
+                    gSession.setFastForward(requestedFastForward);
+                    appliedFastForwardEnabled = requestedFastForward;
+                    __android_log_print(
+                        ANDROID_LOG_INFO,
+                        kTag,
+                        "applied fast-forward on emulation thread: enabled=%s speed=2x",
+                        appliedFastForwardEnabled ? "true" : "false"
+                    );
+                }
+
+                const int framesToRun = appliedFastForwardEnabled ? 2 : 1;
+                bool advanced = false;
+                for (int frame = 0; frame < framesToRun && !gStopEmulationThread.load(); ++frame) {
+                    advanced = gSession.runFrame() || advanced;
+                }
                 if (advanced && gWindow != nullptr && gWidth > 0 && gHeight > 0) {
                     rendered = gSession.renderFrameToWindow(gWindow, gWidth, gHeight);
                     if (rendered && renderedFrames < 5) {
@@ -65,6 +84,16 @@ void emulation_thread_main() {
                     if (rendered) {
                         ++renderedFrames;
                     }
+                }
+                if (appliedFastForwardEnabled && ++pacingLogCountdown >= 180) {
+                    __android_log_print(
+                        ANDROID_LOG_DEBUG,
+                        kTag,
+                        "fast-forward pacing: framesPerTick=%d latestFrameRendered=%s",
+                        framesToRun,
+                        rendered ? "true" : "false"
+                    );
+                    pacingLogCountdown = 0;
                 }
             }
         }
@@ -242,10 +271,27 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetInputMask(JNIEnv*, j
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetFastForward(
+    JNIEnv*,
+    jobject,
+    jboolean enabled
+) {
+    gFastForwardEnabled.store(enabled == JNI_TRUE, std::memory_order_relaxed);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "fast-forward request stored: enabled=%s speed=2x audioMuted=%s",
+        enabled == JNI_TRUE ? "true" : "false",
+        enabled == JNI_TRUE ? "true" : "false"
+    );
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRelease(JNIEnv*, jobject) {
     stop_emulation_thread();
     std::lock_guard<std::mutex> lock(gMutex);
     __android_log_print(ANDROID_LOG_INFO, kTag, "release runtime");
+    gFastForwardEnabled.store(false, std::memory_order_relaxed);
     gSession.release();
     release_window_locked();
 }
@@ -300,6 +346,15 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetRuntimeStatus(JNIEnv* env, jobject) {
     std::lock_guard<std::mutex> lock(gMutex);
     const std::string status = gSession.statusMessage();
+    return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetFastForwardStatus(JNIEnv* env, jobject) {
+    const bool enabled = gFastForwardEnabled.load(std::memory_order_relaxed);
+    const std::string status = enabled
+        ? "fast-forward: on (2x, audio muted)"
+        : "fast-forward: off";
     return env->NewStringUTF(status.c_str());
 }
 

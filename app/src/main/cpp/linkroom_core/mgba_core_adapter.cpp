@@ -144,6 +144,9 @@ bool MgbaCoreAdapter::isCoreAvailable() const {
 }
 
 std::string MgbaCoreAdapter::statusMessage() const {
+    if (romLoaded_ && !paused_ && fastForwardEnabled_) {
+        return "running: mGBA fast-forward is active";
+    }
     if (romLoaded_ && !paused_) {
         return "running: mGBA video frames are rendering";
     }
@@ -364,6 +367,13 @@ void MgbaCoreAdapter::drainAudio() {
         return;
     }
 
+    if (fastForwardEnabled_) {
+        std::vector<std::int16_t> discarded(static_cast<size_t>(framesAvailable) * 2);
+        const int produced = blip_read_samples(left, discarded.data(), framesAvailable, true);
+        blip_read_samples(right, discarded.data() + 1, produced, true);
+        return;
+    }
+
     std::vector<std::int16_t> interleaved(static_cast<size_t>(framesAvailable) * 2);
     const int produced = blip_read_samples(left, interleaved.data(), framesAvailable, true);
     blip_read_samples(right, interleaved.data() + 1, produced, true);
@@ -406,7 +416,7 @@ void MgbaCoreAdapter::pushAudioSamples(const std::int16_t* samples, size_t sampl
 }
 
 int MgbaCoreAdapter::readAudio(std::int16_t* output, int maxSamples) {
-    if (output == nullptr || maxSamples <= 0 || !audioConfigured_ || audioRingBuffer_.empty()) {
+    if (output == nullptr || maxSamples <= 0 || !audioConfigured_ || audioRingBuffer_.empty() || fastForwardEnabled_) {
         return 0;
     }
 
@@ -505,6 +515,25 @@ void MgbaCoreAdapter::setInputMask(std::uint32_t inputMask) {
     if (core_ != nullptr && romLoaded_) {
         core_->setKeys(core_, inputMask_);
     }
+}
+
+void MgbaCoreAdapter::setFastForward(bool enabled) {
+    fastForwardEnabled_ = enabled;
+    if (enabled) {
+        audioReadIndex_ = 0;
+        audioWriteIndex_ = 0;
+        audioBufferedSamples_ = 0;
+        audioStatus_ = "audio muted: fast-forward is active";
+    } else if (audioConfigured_) {
+        audioStatus_ = paused_ ? "audio paused" : "audio running: 48000 Hz stereo PCM16";
+    }
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "Fast-forward %s at 2x; audioMuted=%s",
+        enabled ? "enabled" : "disabled",
+        enabled ? "true" : "false"
+    );
 }
 
 std::string MgbaCoreAdapter::flushBatterySave() {
@@ -620,6 +649,7 @@ void MgbaCoreAdapter::release() {
     inputMask_ = 0;
     romLoaded_ = false;
     paused_ = true;
+    fastForwardEnabled_ = false;
     audioStatus_ = "audio released";
 }
 
@@ -647,6 +677,20 @@ std::string MgbaCoreAdapter::audioStatus() const {
             << ", overruns=" << audioOverruns_
             << ")";
     return message.str();
+}
+
+bool MgbaCoreAdapter::isFastForwardEnabled() const {
+    return fastForwardEnabled_;
+}
+
+std::string MgbaCoreAdapter::fastForwardStatus() const {
+    if (!romLoaded_) {
+        return "fast-forward: waiting for ROM";
+    }
+    if (fastForwardEnabled_) {
+        return "fast-forward: on (2x, audio muted)";
+    }
+    return "fast-forward: off";
 }
 
 } // namespace linkroom

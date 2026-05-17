@@ -17,8 +17,9 @@ This project is a feasibility scaffold only. It includes:
 - Minimal on-screen controls for D-pad, A/B, L/R, Start, and Select
 - In-game battery save load/flush for games that support normal saves
 - Basic stereo PCM audio output through Android AudioTrack
+- Basic 2x fast-forward
 
-This phase can boot, render, play basic audio, accept basic touch input, and persist normal in-game battery saves for user-provided `.gba` files through mGBA. No save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
+This phase can boot, render, play basic audio, fast-forward at 2x, accept basic touch input, and persist normal in-game battery saves for user-provided `.gba` files through mGBA. No save states, rewind, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
 
 ## Requirements
 
@@ -63,10 +64,11 @@ The output should list one device with the `device` state. If it says `unauthori
 11. Tap the selected `.gba` file in the library to open the native player screen.
 12. Confirm video renders and basic game audio is audible.
 13. Use the on-screen controls to verify button input reaches the game.
-14. Use the game's normal in-game save flow, then leave the emulator to flush `current.sav`.
-15. Reopen the same ROM and confirm the game sees the previous in-game save.
-16. Background and resume the app once to confirm video/audio pause and resume cleanly.
-17. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
+14. Toggle 2x fast-forward, then disable it and confirm normal speed returns.
+15. Use the game's normal in-game save flow, then leave the emulator to flush `current.sav`.
+16. Reopen the same ROM and confirm the game sees the previous in-game save.
+17. Background and resume the app once to confirm video/audio pause and resume cleanly.
+18. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
 
 For app state and native runtime logs:
 
@@ -85,6 +87,7 @@ adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRunti
 - Save states are not implemented yet. Closing and reopening the ROM starts a fresh emulator session that can load the prior in-game battery save.
 - The native surface renders mGBA video after a successful `.gba` load and keeps the placeholder checkerboard as a fallback.
 - Basic audio is streamed from mGBA into a native ring buffer and played with Android AudioTrack. If audio initialization fails on a device, video and controls should continue to work.
+- Fast-forward currently supports 2x only. Audio is muted while fast-forward is active, then resumes when normal speed returns.
 - Touch input is limited to simple on-screen controls. External controllers, haptics, and layout customization are not implemented yet.
 - If the native library cannot be loaded, the app should show a graceful placeholder status instead of crashing.
 - Future emulator integration should stay behind `EmulatorRuntime` and `NativeEmulatorBridge`.
