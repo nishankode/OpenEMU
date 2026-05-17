@@ -53,7 +53,13 @@ fun AppNavGraph(
                 onImportCancelled = libraryViewModel::onImportCancelled,
                 onDismissImportError = libraryViewModel::dismissImportError,
                 onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenRom = { rom -> navController.navigate(Routes.emulator(rom.id)) }
+                onToggleFavorite = libraryViewModel::toggleFavorite,
+                onRefreshCoverArt = libraryViewModel::refreshCoverArt,
+                onRemoveCoverArt = libraryViewModel::removeCoverArt,
+                onOpenRom = { rom ->
+                    libraryViewModel.markRomPlayed(rom.id)
+                    navController.navigate(Routes.emulator(rom.id))
+                }
             )
         }
         composable(Routes.Settings) {

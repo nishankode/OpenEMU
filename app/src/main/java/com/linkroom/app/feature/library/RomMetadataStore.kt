@@ -37,7 +37,12 @@ class RomMetadataStore(context: Context) {
                             gameRootPath = gameRootPath,
                             extension = item.optString(KEY_EXTENSION, "gba"),
                             importedAtMillis = item.optLong(KEY_IMPORTED_AT, 0L),
-                            isAvailable = available
+                            isAvailable = available,
+                            isFavorite = item.optBoolean(KEY_IS_FAVORITE, false),
+                            lastPlayedAt = item.optNullableLong(KEY_LAST_PLAYED_AT),
+                            playCount = item.optInt(KEY_PLAY_COUNT, 0),
+                            coverImagePath = item.optNullableString(KEY_COVER_IMAGE_PATH),
+                            thumbnailImagePath = item.optNullableString(KEY_THUMBNAIL_IMAGE_PATH)
                         )
                     )
                 }
@@ -61,6 +66,11 @@ class RomMetadataStore(context: Context) {
                         .put(KEY_GAME_ROOT_PATH, rom.gameRootPath.orEmpty())
                         .put(KEY_EXTENSION, rom.extension)
                         .put(KEY_IMPORTED_AT, rom.importedAtMillis)
+                        .put(KEY_IS_FAVORITE, rom.isFavorite)
+                        .put(KEY_LAST_PLAYED_AT, rom.lastPlayedAt ?: JSONObject.NULL)
+                        .put(KEY_PLAY_COUNT, rom.playCount)
+                        .put(KEY_COVER_IMAGE_PATH, rom.coverImagePath ?: JSONObject.NULL)
+                        .put(KEY_THUMBNAIL_IMAGE_PATH, rom.thumbnailImagePath ?: JSONObject.NULL)
                 )
             }
             metadataFile.writeText(array.toString())
@@ -80,5 +90,26 @@ class RomMetadataStore(context: Context) {
         const val KEY_GAME_ROOT_PATH = "gameRootPath"
         const val KEY_EXTENSION = "extension"
         const val KEY_IMPORTED_AT = "importedAtMillis"
+        const val KEY_IS_FAVORITE = "isFavorite"
+        const val KEY_LAST_PLAYED_AT = "lastPlayedAt"
+        const val KEY_PLAY_COUNT = "playCount"
+        const val KEY_COVER_IMAGE_PATH = "coverImagePath"
+        const val KEY_THUMBNAIL_IMAGE_PATH = "thumbnailImagePath"
+    }
+}
+
+private fun JSONObject.optNullableString(key: String): String? {
+    return if (isNull(key)) {
+        null
+    } else {
+        optString(key).takeIf { it.isNotBlank() }
+    }
+}
+
+private fun JSONObject.optNullableLong(key: String): Long? {
+    return if (isNull(key) || !has(key)) {
+        null
+    } else {
+        optLong(key)
     }
 }
