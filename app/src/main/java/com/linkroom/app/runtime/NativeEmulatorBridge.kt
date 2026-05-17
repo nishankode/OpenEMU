@@ -207,6 +207,25 @@ object NativeEmulatorBridge {
         }
     }
 
+    /**
+     * Hidden Phase 1A diagnostic. This is intentionally not wired into normal UI.
+     */
+    fun runLocalLinkSmokeTest(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping local link smoke test because native library is unavailable.")
+            return "local link smoke: unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeRunLocalLinkSmokeTest()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: runLocalLinkSmokeTest", error)
+        }.getOrElse { error ->
+            "local link smoke: error (${error.javaClass.simpleName})"
+        }
+    }
+
     private inline fun callNative(operation: String, block: () -> Unit): Boolean {
         val failure = loadFailure
         if (failure != null) {
@@ -238,4 +257,5 @@ object NativeEmulatorBridge {
     private external fun nativeReadAudio(buffer: ShortArray, maxSamples: Int): Int
     private external fun nativeGetFastForwardStatus(): String
     private external fun nativeGetCoreStatus(): String
+    private external fun nativeRunLocalLinkSmokeTest(): String
 }

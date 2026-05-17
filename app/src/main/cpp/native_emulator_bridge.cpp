@@ -413,3 +413,11 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetCoreStatus(JNIEnv* e
     __android_log_print(ANDROID_LOG_INFO, kTag, "%s", status.c_str());
     return env->NewStringUTF(status.c_str());
 }
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeRunLocalLinkSmokeTest(JNIEnv* env, jobject) {
+    linkroom::MgbaCoreAdapter adapter;
+    const std::string status = adapter.localLinkSmokeStatus();
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", status.c_str());
+    return env->NewStringUTF(status.c_str());
+}

@@ -39,6 +39,7 @@ public:
     bool isCoreAvailable() const;
     std::string statusMessage() const;
     std::string linkedCoreStatus() const;
+    std::string localLinkSmokeStatus() const;
     RomLoadResult loadAndBootGba(const std::string& romPath, const SavePaths& savePaths);
     bool runFrame();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);

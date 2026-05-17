@@ -57,6 +57,7 @@ add_library(
     SHARED
     native_emulator_bridge.cpp
     placeholder_renderer.cpp
+    "${MGBA_UPSTREAM_DIR}/src/gba/sio/lockstep.c"
     linkroom_core/emulator_session.cpp
     linkroom_core/mgba_core_adapter.cpp
     linkroom_core/save_paths.cpp

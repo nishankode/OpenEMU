@@ -4,9 +4,13 @@
 #include <mgba/core/core.h>
 #include <mgba/core/input.h>
 #include <mgba/core/interface.h>
+#include <mgba/core/lockstep.h>
 #include <mgba/core/serialize.h>
 #include <mgba/internal/gba/audio.h>
+#include <mgba/internal/gba/gba.h>
 #include <mgba/internal/gba/input.h>
+#include <mgba/internal/gba/sio.h>
+#include <mgba/internal/gba/sio/lockstep.h>
 #include <mgba-util/vfs.h>
 
 #include <android/log.h>
@@ -172,6 +176,84 @@ std::string MgbaCoreAdapter::linkedCoreStatus() const {
     return isCoreAvailable()
         ? "mGBA core linked: true (0.10.5, GBA core compiled; video/audio rendering enabled)"
         : "mGBA core linked: false";
+}
+
+std::string MgbaCoreAdapter::localLinkSmokeStatus() const {
+    struct mCore* coreA = mCoreCreate(mPLATFORM_GBA);
+    struct mCore* coreB = mCoreCreate(mPLATFORM_GBA);
+    if (coreA == nullptr || coreB == nullptr) {
+        if (coreA != nullptr) {
+            coreA->deinit(coreA);
+        }
+        if (coreB != nullptr) {
+            coreB->deinit(coreB);
+        }
+        return "local link smoke: failed to create two GBA cores";
+    }
+
+    if (!coreA->init(coreA) || !coreB->init(coreB)) {
+        coreA->deinit(coreA);
+        coreB->deinit(coreB);
+        return "local link smoke: failed to initialize two GBA cores";
+    }
+
+    mCoreInitConfig(coreA, "linkroom-link-smoke-a");
+    mCoreInitConfig(coreB, "linkroom-link-smoke-b");
+
+    auto* gbaA = static_cast<struct GBA*>(coreA->board);
+    auto* gbaB = static_cast<struct GBA*>(coreB->board);
+    if (gbaA == nullptr || gbaB == nullptr) {
+        coreA->deinit(coreA);
+        coreB->deinit(coreB);
+        return "local link smoke: failed to access GBA boards";
+    }
+
+    struct GBASIOLockstep lockstep {};
+    mLockstepInit(&lockstep.d);
+    GBASIOLockstepInit(&lockstep);
+
+    struct GBASIOLockstepNode nodeA {};
+    struct GBASIOLockstepNode nodeB {};
+    GBASIOLockstepNodeCreate(&nodeA);
+    GBASIOLockstepNodeCreate(&nodeB);
+
+    const bool attachedA = GBASIOLockstepAttachNode(&lockstep, &nodeA);
+    const bool attachedB = GBASIOLockstepAttachNode(&lockstep, &nodeB);
+    if (!attachedA || !attachedB || lockstep.d.attached != 2) {
+        if (attachedA) {
+            GBASIOLockstepDetachNode(&lockstep, &nodeA);
+        }
+        if (attachedB) {
+            GBASIOLockstepDetachNode(&lockstep, &nodeB);
+        }
+        mLockstepDeinit(&lockstep.d);
+        coreA->deinit(coreA);
+        coreB->deinit(coreB);
+        return "local link smoke: failed to attach two lockstep nodes";
+    }
+
+    // This is intentionally setup-only. Real link play must run two ROM-loaded
+    // cores in synchronized stepping loops before attempting transfers.
+    GBASIOSetDriver(&gbaA->sio, &nodeA.d, SIO_MULTI);
+    GBASIOSetDriver(&gbaA->sio, &nodeA.d, SIO_NORMAL_32);
+    GBASIOSetDriver(&gbaB->sio, &nodeB.d, SIO_MULTI);
+    GBASIOSetDriver(&gbaB->sio, &nodeB.d, SIO_NORMAL_32);
+
+    const int attached = lockstep.d.attached;
+
+    GBASIOSetDriver(&gbaA->sio, nullptr, SIO_NORMAL_32);
+    GBASIOSetDriver(&gbaA->sio, nullptr, SIO_MULTI);
+    GBASIOSetDriver(&gbaB->sio, nullptr, SIO_NORMAL_32);
+    GBASIOSetDriver(&gbaB->sio, nullptr, SIO_MULTI);
+    GBASIOLockstepDetachNode(&lockstep, &nodeB);
+    GBASIOLockstepDetachNode(&lockstep, &nodeA);
+    mLockstepDeinit(&lockstep.d);
+    coreA->deinit(coreA);
+    coreB->deinit(coreB);
+
+    return attached == 2
+        ? "local link smoke: setup succeeded (2 GBA cores, shared GBASIOLockstep, SIO drivers installed)"
+        : "local link smoke: setup incomplete";
 }
 
 RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath, const SavePaths& savePaths) {

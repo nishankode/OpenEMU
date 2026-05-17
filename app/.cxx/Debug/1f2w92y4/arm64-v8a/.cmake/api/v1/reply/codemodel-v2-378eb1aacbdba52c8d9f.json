@@ -38,7 +38,7 @@
 						10
 					],
 					"hasInstallRule" : true,
-					"jsonFile" : "directory-mgba-Debug-c1a04ccc9db78926cba0.json",
+					"jsonFile" : "directory-mgba-Debug-10cd3da798835c757a8d.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.1"
@@ -198,21 +198,21 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "linkroom_mgba::@86a0ee6a5eb1c0f25011",
-					"jsonFile" : "target-linkroom_mgba-Debug-f11d56097f4822a9e5d1.json",
+					"jsonFile" : "target-linkroom_mgba-Debug-434e746dd93263583b43.json",
 					"name" : "linkroom_mgba",
 					"projectIndex" : 1
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "linkroom_mgba-version-info::@86a0ee6a5eb1c0f25011",
-					"jsonFile" : "target-linkroom_mgba-version-info-Debug-6f6dc3105c3b7d09ebfc.json",
+					"jsonFile" : "target-linkroom_mgba-version-info-Debug-5f19801f6560b31544b1.json",
 					"name" : "linkroom_mgba-version-info",
 					"projectIndex" : 1
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "linkroom_native::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-linkroom_native-Debug-bfcfe45ff6798fc01adf.json",
+					"jsonFile" : "target-linkroom_native-Debug-80de42a8f7cb529e7c39.json",
 					"name" : "linkroom_native",
 					"projectIndex" : 0
 				}
@@ -222,7 +222,7 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a",
+		"build" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/arm64-v8a",
 		"source" : "C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/src/main/cpp"
 	},
 	"version" : 

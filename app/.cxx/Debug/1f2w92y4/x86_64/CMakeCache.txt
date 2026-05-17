@@ -433,7 +433,7 @@ USE_SQLITE3:BOOL=OFF
 
 USE_ZLIB:BOOL=OFF
 
-VERSION_STRING_CACHE:STRING=0.10-main-4-c85351c-dirty
+VERSION_STRING_CACHE:STRING=0.10-main-14-1eab610-dirty
 
 //Path to a library.
 android-lib:FILEPATH=C:/Users/mnsnn/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/x86_64-linux-android/26/libandroid.so
