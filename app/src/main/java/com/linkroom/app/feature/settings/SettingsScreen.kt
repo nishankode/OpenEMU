@@ -1,5 +1,6 @@
 package com.linkroom.app.feature.settings
 
+import android.content.pm.ApplicationInfo
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,7 +46,13 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenLocalLinkDebug: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val isDebuggable = remember(context) {
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
     var localLinkUnlockCount by remember { mutableIntStateOf(0) }
+    val remainingUnlockTaps = (7 - localLinkUnlockCount).coerceAtLeast(0)
+    val developerToolsUnlocked = isDebuggable || localLinkUnlockCount >= 7
 
     Scaffold(
         containerColor = AppBackground,
@@ -109,7 +117,11 @@ fun SettingsScreen(
                     SettingRow("Native status", "mGBA linked through the native runtime.", "Core")
                     SettingRow(
                         title = "Version",
-                        body = "0.1.0",
+                        body = if (developerToolsUnlocked) {
+                            "0.1.0 - Developer tools unlocked"
+                        } else {
+                            "0.1.0 - Long-press $remainingUnlockTaps more times for developer tools"
+                        },
                         status = "Debug",
                         modifier = Modifier.pointerInput(Unit) {
                             detectTapGestures(
@@ -119,7 +131,16 @@ fun SettingsScreen(
                             )
                         }
                     )
-                    if (localLinkUnlockCount >= 7) {
+                }
+            }
+            if (developerToolsUnlocked) {
+                item {
+                    SettingsSection(title = "Developer tools") {
+                        Text(
+                            text = "Debug-only local link tools for same-device two-core testing.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppTextSecondary
+                        )
                         TextButton(onClick = onOpenLocalLinkDebug) {
                             Text("Open Local Link Debug")
                         }
