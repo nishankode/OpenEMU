@@ -109,6 +109,8 @@ fun LocalLinkDebugScreen(
     var starting by remember { mutableStateOf(false) }
     var startedAtMillis by remember { mutableLongStateOf(0L) }
     var clockTick by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
+    var activeViewSlot by remember { mutableStateOf(1) }
+    var activeInputSlot by remember { mutableStateOf(1) }
 
     LaunchedEffect(playableRoms) {
         if (playableRoms.isEmpty()) {
@@ -132,6 +134,17 @@ fun LocalLinkDebugScreen(
         }
     }
 
+    LaunchedEffect(activeViewSlot) {
+        Log.i(TAG, "Switching local link video view to Slot $activeViewSlot")
+        NativeEmulatorBridge.setLocalLinkRenderSlot(activeViewSlot)
+    }
+
+    LaunchedEffect(activeInputSlot) {
+        Log.i(TAG, "Switching local link input target to Slot $activeInputSlot")
+        NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+        NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+    }
+
     val slot1Rom = playableRoms.firstOrNull { it.id == selectedSlot1Id }
     val slot2Rom = playableRoms.firstOrNull { it.id == selectedSlot2Id } ?: slot1Rom
     val phase = remember(status, starting) { derivePhase(status, starting) }
@@ -147,10 +160,12 @@ fun LocalLinkDebugScreen(
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-                    Log.i(TAG, "Local link debug paused; player 1 input cleared")
+                    NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+                    Log.i(TAG, "Local link debug paused; inputs cleared")
                 }
                 Lifecycle.Event.ON_DESTROY -> {
                     NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+                    NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
                     NativeEmulatorBridge.detachLocalLinkSurface()
                     NativeEmulatorBridge.stopLocalLinkTest()
                 }
@@ -161,6 +176,7 @@ fun LocalLinkDebugScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+            NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
             NativeEmulatorBridge.detachLocalLinkSurface()
             NativeEmulatorBridge.stopLocalLinkTest()
         }
@@ -218,7 +234,7 @@ fun LocalLinkDebugScreen(
                         )
                     }
                     Text(
-                        text = "Developer-only local link test. Slot 1 renders here while Slot 2 runs headless with a separate save root.",
+                        text = "Developer-only local link test. Toggle the view and control target while both slots remain connected to one lockstep session.",
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTextSecondary
                     )
@@ -226,21 +242,28 @@ fun LocalLinkDebugScreen(
             }
 
             AppCard(contentPadding = PaddingValues(10.dp)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(190.dp)
-                        .background(AppSurface, AppShapes.large)
-                        .border(1.dp, AppBorder, AppShapes.large)
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LocalLinkSlot1Surface(
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                    SlotToggleRow(
+                        label = "Viewing",
+                        selectedSlot = activeViewSlot,
+                        onSelected = { activeViewSlot = it }
+                    )
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(240f / 160f)
-                            .background(Color.Black, RoundedCornerShape(10.dp))
-                    )
+                            .height(190.dp)
+                            .background(AppSurface, AppShapes.large)
+                            .border(1.dp, AppBorder, AppShapes.large)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LocalLinkSlotSurface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(240f / 160f)
+                                .background(Color.Black, RoundedCornerShape(10.dp))
+                        )
+                    }
                 }
             }
 
@@ -303,6 +326,7 @@ fun LocalLinkDebugScreen(
                                     Log.i(TAG, "Stopping local link debug")
                                     NativeEmulatorBridge.stopLocalLinkTest()
                                     NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+                                    NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
                                     status = NativeEmulatorBridge.getLocalLinkStatus()
                                     startedAtMillis = 0L
                                 },
@@ -318,14 +342,19 @@ fun LocalLinkDebugScreen(
             AppCard(contentPadding = PaddingValues(12.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
                     Text(
-                        text = "Player 1 controls",
+                        text = "Controls",
                         color = AppTextPrimary,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    LocalLinkControlOverlay(enabled = isRunning)
+                    SlotToggleRow(
+                        label = "Input target",
+                        selectedSlot = activeInputSlot,
+                        onSelected = { activeInputSlot = it }
+                    )
+                    LocalLinkControlOverlay(enabled = isRunning, activeSlot = activeInputSlot)
                     Text(
-                        text = "Controls route to Slot 1 only. Slot 2 remains idle/headless in Phase 1D.",
+                        text = "Controls route only to the active input slot. The other slot keeps running.",
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTextSecondary
                     )
@@ -341,10 +370,15 @@ fun LocalLinkDebugScreen(
                         fontWeight = FontWeight.Bold
                     )
                     DetailRow("Runtime", formatDuration(runtimeSeconds))
+                    DetailRow("Active input", "Slot $activeInputSlot")
+                    DetailRow("Active view", "Slot $activeViewSlot")
                     DetailRow("Frame count", extractStatusValue(status, "slot1Frames") ?: "not available")
                     DetailRow("Slot 2 frames", extractStatusValue(status, "slot2Frames") ?: "not available")
-                    DetailRow("Rendered frames", extractStatusValue(status, "slot1Rendered") ?: "not available")
+                    DetailRow("Slot 1 rendered", extractStatusValue(status, "slot1Rendered") ?: "not available")
+                    DetailRow("Slot 2 rendered", extractStatusValue(status, "slot2Rendered") ?: "not available")
                     DetailRow("SIO attached", extractStatusValue(status, "attached") ?: "not available")
+                    DetailRow("SIO mode 1", extractStatusValue(status, "sioMode1") ?: "not available")
+                    DetailRow("SIO mode 2", extractStatusValue(status, "sioMode2") ?: "not available")
                     DetailRow("Transfer phase", extractStatusValue(status, "transferPhase") ?: "not available")
                     DetailRow("Scheduler ticks", extractStatusValue(status, "ticks") ?: "not available")
                     DetailRow("Stall warning", if (status.contains("fell behind", ignoreCase = true)) "detected" else "none reported")
@@ -382,13 +416,13 @@ fun LocalLinkDebugScreen(
 }
 
 @Composable
-private fun LocalLinkSlot1Surface(modifier: Modifier = Modifier) {
+private fun LocalLinkSlotSurface(modifier: Modifier = Modifier) {
     val textureViewRef = remember { AtomicReference<TextureView?>(null) }
     val attachedSurfaceRef = remember { AtomicReference<Surface?>(null) }
     val listener = remember {
         object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
-                Log.i(TAG, "Local link Slot 1 surface available: $width x $height")
+                Log.i(TAG, "Local link surface available: $width x $height")
                 val surface = Surface(surfaceTexture)
                 attachedSurfaceRef.getAndSet(surface)?.release()
                 NativeEmulatorBridge.attachLocalLinkSurface(surface)
@@ -396,12 +430,12 @@ private fun LocalLinkSlot1Surface(modifier: Modifier = Modifier) {
             }
 
             override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
-                Log.i(TAG, "Local link Slot 1 surface changed: $width x $height")
+                Log.i(TAG, "Local link surface changed: $width x $height")
                 NativeEmulatorBridge.resizeLocalLinkSurface(width, height)
             }
 
             override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
-                Log.i(TAG, "Local link Slot 1 surface destroyed")
+                Log.i(TAG, "Local link surface destroyed")
                 NativeEmulatorBridge.detachLocalLinkSurface()
                 attachedSurfaceRef.getAndSet(null)?.release()
                 return true
@@ -431,8 +465,40 @@ private fun LocalLinkSlot1Surface(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LocalLinkControlOverlay(enabled: Boolean) {
+private fun SlotToggleRow(
+    label: String,
+    selectedSlot: Int,
+    onSelected: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = label,
+            color = AppTextSecondary,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        for (slot in 1..2) {
+            OutlinedButton(onClick = { onSelected(slot) }) {
+                Text(if (selectedSlot == slot) "Slot $slot*" else "Slot $slot")
+            }
+        }
+    }
+}
+
+@Composable
+private fun LocalLinkControlOverlay(enabled: Boolean, activeSlot: Int) {
     var pressedButtons by remember { mutableStateOf<Set<Int>>(emptySet()) }
+
+    LaunchedEffect(enabled, activeSlot) {
+        pressedButtons = emptySet()
+        NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+        NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+    }
 
     fun setPressed(bit: Int, pressed: Boolean) {
         val updatedButtons = if (pressed) {
@@ -442,7 +508,8 @@ private fun LocalLinkControlOverlay(enabled: Boolean) {
         }
         pressedButtons = updatedButtons
         val inputMask = if (enabled) updatedButtons.fold(0) { mask, button -> mask or button } else 0
-        NativeEmulatorBridge.setLocalLinkInputMask(1, inputMask)
+        Log.d(TAG, "Slot $activeSlot input mask: 0x${inputMask.toString(16)}")
+        NativeEmulatorBridge.setLocalLinkInputMask(activeSlot, inputMask)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

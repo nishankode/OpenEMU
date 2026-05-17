@@ -520,3 +520,13 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetLocalLinkInputMask(
 ) {
     gLocalLinkSession.setInputMask(static_cast<int>(slot), static_cast<std::uint32_t>(input_mask));
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetLocalLinkRenderSlot(
+    JNIEnv*,
+    jobject,
+    jint slot
+) {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "hidden local link render slot requested: %d", slot);
+    gLocalLinkSession.setRenderSlot(static_cast<int>(slot));
+}

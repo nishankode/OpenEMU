@@ -30,6 +30,7 @@ public:
     void attachSlot1Surface(ANativeWindow* window);
     void resizeSlot1Surface(int width, int height);
     void detachSlot1Surface();
+    void setRenderSlot(int slot);
 
 private:
     struct LockstepContext {
@@ -66,6 +67,8 @@ private:
     int slot1WindowWidth_ = 0;
     int slot1WindowHeight_ = 0;
     std::uint64_t slot1RenderedFrames_ = 0;
+    std::uint64_t slot2RenderedFrames_ = 0;
+    int activeRenderSlot_ = 1;
     bool lockstepReady_ = false;
     bool running_ = false;
 };

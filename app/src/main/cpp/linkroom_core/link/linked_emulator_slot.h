@@ -38,6 +38,7 @@ public:
     const std::string& romPath() const;
     const std::string& saveRoot() const;
     std::uint64_t framesRun() const;
+    int sioMode() const;
     GBA* gba() const;
 
 private:

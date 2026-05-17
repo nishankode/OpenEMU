@@ -66,6 +66,8 @@ std::string LocalLinkSession::start(
     stop();
     std::lock_guard<std::mutex> lock(mutex_);
     baseTestDir_ = baseTestDir;
+    slot1RenderedFrames_ = 0;
+    slot2RenderedFrames_ = 0;
     const std::string slot1Root = baseTestDir_ + "/slot_1";
     const std::string slot2Root = baseTestDir_ + "/slot_2";
 
@@ -130,8 +132,10 @@ void LocalLinkSession::setInputMask(int slot, std::uint32_t inputMask) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (slot == 1) {
         slot1_.setInputMask(inputMask);
+        __android_log_print(ANDROID_LOG_DEBUG, kTag, "slot 1 input mask: 0x%03x", inputMask);
     } else if (slot == 2) {
         slot2_.setInputMask(inputMask);
+        __android_log_print(ANDROID_LOG_DEBUG, kTag, "slot 2 input mask: 0x%03x", inputMask);
     }
 }
 
@@ -169,6 +173,12 @@ void LocalLinkSession::detachSlot1Surface() {
     std::lock_guard<std::mutex> lock(mutex_);
     releaseSlot1WindowLocked();
     __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 surface detached");
+}
+
+void LocalLinkSession::setRenderSlot(int slot) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    activeRenderSlot_ = slot == 2 ? 2 : 1;
+    __android_log_print(ANDROID_LOG_INFO, kTag, "active local link render slot: %d", activeRenderSlot_);
 }
 
 bool LocalLinkSession::prepareLockstep() {
@@ -218,19 +228,27 @@ void LocalLinkSession::schedulerTick() {
     slot1_.runFrame();
     slot2_.runFrame();
     if (slot1Window_ != nullptr && slot1WindowWidth_ > 0 && slot1WindowHeight_ > 0) {
-        if (slot1_.renderFrameToWindow(slot1Window_, slot1WindowWidth_, slot1WindowHeight_)) {
-            ++slot1RenderedFrames_;
+        LinkedEmulatorSlot& renderSlot = activeRenderSlot_ == 2 ? slot2_ : slot1_;
+        if (renderSlot.renderFrameToWindow(slot1Window_, slot1WindowWidth_, slot1WindowHeight_)) {
+            if (activeRenderSlot_ == 2) {
+                ++slot2RenderedFrames_;
+            } else {
+                ++slot1RenderedFrames_;
+            }
         }
     }
     if ((slot1_.framesRun() % 600) == 0) {
         __android_log_print(
             ANDROID_LOG_INFO,
             kTag,
-            "scheduler running: slot1Frames=%llu slot2Frames=%llu attached=%d transferPhase=%d",
+            "scheduler running: slot1Frames=%llu slot2Frames=%llu renderSlot=%d attached=%d transferPhase=%d sio1=%d sio2=%d",
             static_cast<unsigned long long>(slot1_.framesRun()),
             static_cast<unsigned long long>(slot2_.framesRun()),
+            activeRenderSlot_,
             lockstep_.d.attached,
-            static_cast<int>(lockstep_.d.transferActive)
+            static_cast<int>(lockstep_.d.transferActive),
+            slot1_.sioMode(),
+            slot2_.sioMode()
         );
     }
 }
@@ -243,8 +261,12 @@ std::string LocalLinkSession::statusLocked() const {
         << " slot1Frames=" << slot1_.framesRun()
         << " slot2Frames=" << slot2_.framesRun()
         << " slot1Rendered=" << slot1RenderedFrames_
+        << " slot2Rendered=" << slot2RenderedFrames_
+        << " renderSlot=" << activeRenderSlot_
         << " attached=" << lockstep_.d.attached
-        << " transferPhase=" << static_cast<int>(lockstep_.d.transferActive);
+        << " transferPhase=" << static_cast<int>(lockstep_.d.transferActive)
+        << " sioMode1=" << slot1_.sioMode()
+        << " sioMode2=" << slot2_.sioMode();
     return out.str();
 }
 

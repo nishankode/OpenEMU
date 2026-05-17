@@ -322,3 +322,73 @@ Recommended Phase 1E:
 - Add a link activity panel that distinguishes idle, mode-change, transfer-start, transfer-complete, and stall states.
 - Test two user-provided link-capable ROM instances for actual in-game cable handshake behavior.
 - Add optional scripted/secondary input for Slot 2 only if needed for handshake testing.
+
+## Phase 1E Findings
+
+Phase 1E upgrades the hidden `Local Link Debug` screen from a Slot 1-only viewer into a two-slot control harness.
+
+Implemented approach: single video surface with a `Viewing` toggle.
+
+Why toggle instead of split-screen:
+
+- It keeps the native rendering path simple: one debug `ANativeWindow` is attached at a time.
+- It avoids running two Android surface locks per scheduler tick.
+- It is enough to guide both local cores toward an in-game link room during feasibility testing.
+
+Native additions:
+
+- `LocalLinkSession::setRenderSlot(slot)` chooses which linked slot renders to the attached debug surface.
+- The scheduler renders either Slot 1 or Slot 2 after both cores advance.
+- Status now includes:
+  - `slot1Rendered`
+  - `slot2Rendered`
+  - `renderSlot`
+  - `sioMode1`
+  - `sioMode2`
+- `LinkedEmulatorSlot::sioMode()` exposes the current mGBA SIO mode value for each slot.
+- Input logging now distinguishes Slot 1 and Slot 2 input masks.
+
+Kotlin/JNI additions:
+
+- `NativeEmulatorBridge.setLocalLinkRenderSlot(slot)`
+- Local Link Debug screen `Viewing` toggle:
+  - Slot 1
+  - Slot 2
+- Local Link Debug screen `Input target` toggle:
+  - Slot 1
+  - Slot 2
+
+Debug-screen behavior:
+
+- User can start one two-core local link session.
+- User can view Slot 1 or Slot 2 on the same surface.
+- User can route the controls to Slot 1 or Slot 2.
+- Switching input target clears both input masks to avoid stuck buttons.
+- Both slots keep separate save roots:
+
+```text
+files/link_tests/slot_1/
+files/link_tests/slot_2/
+```
+
+Current limitations:
+
+- No split-screen.
+- No audio for either link slot.
+- No save states during active local link debug.
+- SIO transfer/activity is still inferred from `transferPhase` and SIO mode values; explicit transfer counters are not yet instrumented.
+- Real game-level trade/link completion remains unproven.
+
+Phase 1E status: partially working until device testing confirms Slot 2 video and Slot 2 controls. Architecturally, two-slot viewing and input routing are now wired while keeping the screen hidden/debug-only.
+
+Recommended Phase 1F:
+
+- Instrument explicit SIO transfer counters in or around the lockstep driver callbacks.
+- Add a compact link activity panel:
+  - idle
+  - mode changed
+  - transfer active
+  - transfer completed
+  - possible stall
+- Add optional pre-link battery-save backup for both `link_tests` slots before starting a session.
+- Test whether two local user-provided compatible ROMs can enter an in-game cable room and generate transfer activity.

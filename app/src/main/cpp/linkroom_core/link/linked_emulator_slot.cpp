@@ -304,6 +304,11 @@ std::uint64_t LinkedEmulatorSlot::framesRun() const {
     return framesRun_;
 }
 
+int LinkedEmulatorSlot::sioMode() const {
+    auto* board = gba();
+    return board != nullptr ? static_cast<int>(board->sio.mode) : -1;
+}
+
 GBA* LinkedEmulatorSlot::gba() const {
     return core_ != nullptr ? static_cast<GBA*>(core_->board) : nullptr;
 }

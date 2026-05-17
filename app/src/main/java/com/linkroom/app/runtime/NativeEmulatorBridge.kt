@@ -288,6 +288,10 @@ object NativeEmulatorBridge {
         nativeSetLocalLinkInputMask(slot, inputMask)
     }
 
+    fun setLocalLinkRenderSlot(slot: Int) = callNative("setLocalLinkRenderSlot") {
+        nativeSetLocalLinkRenderSlot(slot)
+    }
+
     private inline fun callNative(operation: String, block: () -> Unit): Boolean {
         val failure = loadFailure
         if (failure != null) {
@@ -331,4 +335,5 @@ object NativeEmulatorBridge {
     private external fun nativeResizeLocalLinkSurface(width: Int, height: Int)
     private external fun nativeDetachLocalLinkSurface()
     private external fun nativeSetLocalLinkInputMask(slot: Int, inputMask: Int)
+    private external fun nativeSetLocalLinkRenderSlot(slot: Int)
 }

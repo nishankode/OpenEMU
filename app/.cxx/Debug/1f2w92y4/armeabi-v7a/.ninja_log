@@ -150,3 +150,16 @@
 495	626	8007411076563968	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	b18e018ffabcb65d
 11	430	0	mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
 11	430	0	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+15	474	0	mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+15	474	0	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+495	1923	8007415441250969	CMakeFiles/linkroom_native.dir/linkroom_core/link/linked_emulator_slot.cpp.o	bf2535f1dc69faff
+476	2030	8007415442326100	CMakeFiles/linkroom_native.dir/native_emulator_bridge.cpp.o	f7db60df25603259
+485	2127	8007415443275010	CMakeFiles/linkroom_native.dir/linkroom_core/link/local_link_session.cpp.o	dd59955b0f9997e3
+2128	2255	8007415444536318	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	b18e018ffabcb65d
+21	447	0	mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+21	447	0	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+448	490	8007415738143724	mgba/CMakeFiles/linkroom_mgba.dir/version.c.o	3008c550c2005c0c
+490	589	8007415738963640	mgba/liblinkroom_mgba.a	41cb160e6ccd4646
+589	728	8007415740381403	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/build/intermediates/cxx/Debug/1f2w92y4/obj/armeabi-v7a/liblinkroom_native.so	b18e018ffabcb65d
+12	439	0	mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
+12	439	0	C:/Users/mnsnn/Documents/SAAS/GBAEmu/app/.cxx/Debug/1f2w92y4/armeabi-v7a/mgba/CMakeFiles/linkroom_mgba-version-info	45eabc76baaaa6bd
