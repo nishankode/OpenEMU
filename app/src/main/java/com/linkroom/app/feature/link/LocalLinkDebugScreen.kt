@@ -111,6 +111,8 @@ fun LocalLinkDebugScreen(
     var clockTick by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var activeViewSlot by remember { mutableStateOf(1) }
     var activeInputSlot by remember { mutableStateOf(1) }
+    var savePrepStatus by remember { mutableStateOf("Save prep: choose ROMs, then copy saves before starting.") }
+    var saveInfoRefresh by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(playableRoms) {
         if (playableRoms.isEmpty()) {
@@ -153,6 +155,48 @@ fun LocalLinkDebugScreen(
         ((clockTick - startedAtMillis).coerceAtLeast(0L) / 1000L)
     } else {
         0L
+    }
+    val slot1MainSave = remember(slot1Rom?.gameRootPath, saveInfoRefresh) { mainSaveFile(slot1Rom) }
+    val slot2MainSave = remember(slot2Rom?.gameRootPath, saveInfoRefresh) { mainSaveFile(slot2Rom) }
+    val slot1LinkSave = remember(slot1Root, saveInfoRefresh) { linkSaveFile(slot1Root) }
+    val slot2LinkSave = remember(slot2Root, saveInfoRefresh) { linkSaveFile(slot2Root) }
+
+    fun refreshSaveInfo() {
+        saveInfoRefresh = SystemClock.elapsedRealtime()
+    }
+
+    fun copyMainSaveToSlot(slot: Int): String {
+        val source = if (slot == 1) slot1MainSave else slot2MainSave
+        val destination = if (slot == 1) slot1LinkSave else slot2LinkSave
+        if (source == null || !source.exists() || source.length() <= 0L) {
+            return "Slot $slot copy skipped: main save is missing."
+        }
+        return runCatching {
+            destination.parentFile?.mkdirs()
+            source.copyTo(destination, overwrite = true)
+            Log.i(TAG, "Copied main save to link slot $slot: source=${source.absolutePath} destination=${destination.absolutePath} size=${destination.length()}")
+            "Slot $slot link save copied (${destination.length()} bytes)."
+        }.getOrElse { error ->
+            Log.w(TAG, "Unable to copy main save to slot $slot", error)
+            "Slot $slot copy failed: ${error.javaClass.simpleName}"
+        }.also {
+            refreshSaveInfo()
+        }
+    }
+
+    fun resetLinkSave(slot: Int): String {
+        val target = if (slot == 1) slot1LinkSave else slot2LinkSave
+        return runCatching {
+            val existed = target.exists()
+            val deleted = !existed || target.delete()
+            Log.i(TAG, "Reset link save slot $slot: path=${target.absolutePath} existed=$existed deleted=$deleted")
+            if (deleted) "Slot $slot link save reset." else "Slot $slot reset failed: could not delete file."
+        }.getOrElse { error ->
+            Log.w(TAG, "Unable to reset link save slot $slot", error)
+            "Slot $slot reset failed: ${error.javaClass.simpleName}"
+        }.also {
+            refreshSaveInfo()
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -238,35 +282,6 @@ fun LocalLinkDebugScreen(
                 }
             }
 
-            AppCard(contentPadding = PaddingValues(10.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
-                    SlotToggleRow(
-                        label = "Viewing",
-                        selectedSlot = activeViewSlot,
-                        onSelected = { slot ->
-                            NativeEmulatorBridge.clearLocalLinkInput()
-                            activeViewSlot = slot
-                        }
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(190.dp)
-                            .background(AppSurface, AppShapes.large)
-                            .border(1.dp, AppBorder, AppShapes.large)
-                            .padding(8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        LocalLinkSlotSurface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(240f / 160f)
-                                .background(Color.Black, RoundedCornerShape(10.dp))
-                        )
-                    }
-                }
-            }
-
             if (playableRoms.isEmpty()) {
                 AppCard {
                     Text(
@@ -338,6 +353,35 @@ fun LocalLinkDebugScreen(
                 }
             }
 
+            AppCard(contentPadding = PaddingValues(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                    SlotToggleRow(
+                        label = "Viewing",
+                        selectedSlot = activeViewSlot,
+                        onSelected = { slot ->
+                            NativeEmulatorBridge.clearLocalLinkInput()
+                            activeViewSlot = slot
+                        }
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(190.dp)
+                            .background(AppSurface, AppShapes.large)
+                            .border(1.dp, AppBorder, AppShapes.large)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LocalLinkSlotSurface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(240f / 160f)
+                                .background(Color.Black, RoundedCornerShape(10.dp))
+                        )
+                    }
+                }
+            }
+
             AppCard(contentPadding = PaddingValues(12.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
                     Text(
@@ -366,10 +410,84 @@ fun LocalLinkDebugScreen(
             AppCard {
                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
                     Text(
-                        text = "Live status",
+                        text = "Link-test save preparation",
                         style = MaterialTheme.typography.titleMedium,
                         color = AppTextPrimary,
                         fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Use copied saves so both slots can reach the in-game link room. Main saves are only read, never modified.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextSecondary
+                    )
+                    DetailRow("Slot 1 main save", fileSummary(slot1MainSave))
+                    DetailRow("Slot 1 link save", fileSummary(slot1LinkSave))
+                    DetailRow("Slot 2 main save", fileSummary(slot2MainSave))
+                    DetailRow("Slot 2 link save", fileSummary(slot2LinkSave))
+                    Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                        OutlinedButton(
+                            enabled = !isRunning && slot1Rom != null,
+                            onClick = { savePrepStatus = copyMainSaveToSlot(1) }
+                        ) {
+                            Text("Copy main save to Slot 1")
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                        OutlinedButton(
+                            enabled = !isRunning && slot2Rom != null,
+                            onClick = { savePrepStatus = copyMainSaveToSlot(2) }
+                        ) {
+                            Text("Copy main save to Slot 2")
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                        OutlinedButton(
+                            enabled = !isRunning && slot1Rom != null && slot2Rom != null,
+                            onClick = {
+                                val first = copyMainSaveToSlot(1)
+                                val second = copyMainSaveToSlot(2)
+                                savePrepStatus = "$first $second"
+                            }
+                        ) {
+                            Text("Copy main save to both slots")
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                        OutlinedButton(
+                            enabled = !isRunning,
+                            onClick = { savePrepStatus = resetLinkSave(1) }
+                        ) {
+                            Text("Reset Slot 1 link save")
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                        OutlinedButton(
+                            enabled = !isRunning,
+                            onClick = { savePrepStatus = resetLinkSave(2) }
+                        ) {
+                            Text("Reset Slot 2 link save")
+                        }
+                    }
+                    Text(
+                        text = savePrepStatus,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextSecondary
+                    )
+                }
+            }
+
+            AppCard {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                    Text(
+                        text = "Link Activity",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AppTextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Switch Viewing and Controls to guide both games toward the in-game link room, then watch for SIO mode and transfer activity.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextSecondary
                     )
                     DetailRow("Runtime", formatDuration(runtimeSeconds))
                     DetailRow("Active input", "Slot $activeInputSlot")
@@ -382,6 +500,10 @@ fun LocalLinkDebugScreen(
                     DetailRow("SIO mode 1", extractStatusValue(status, "sioMode1") ?: "not available")
                     DetailRow("SIO mode 2", extractStatusValue(status, "sioMode2") ?: "not available")
                     DetailRow("Transfer phase", extractStatusValue(status, "transferPhase") ?: "not available")
+                    DetailRow("Transfer attempts", extractStatusValue(status, "transferAttempts") ?: "0")
+                    DetailRow("Transfer completes", extractStatusValue(status, "transferCompletions") ?: "0")
+                    DetailRow("Lockstep signals", extractStatusValue(status, "lockstepSignals") ?: "0")
+                    DetailRow("Lockstep waits", extractStatusValue(status, "lockstepWaits") ?: "0")
                     DetailRow("Scheduler ticks", extractStatusValue(status, "ticks") ?: "not available")
                     DetailRow("Stall warning", if (status.contains("fell behind", ignoreCase = true)) "detected" else "none reported")
                     Text(
@@ -395,10 +517,15 @@ fun LocalLinkDebugScreen(
             AppCard {
                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
                     Text(
-                        text = "Debug details",
+                        text = "Test guidance",
                         style = MaterialTheme.typography.titleMedium,
                         color = AppTextPrimary,
                         fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "1. Copy the main save into each link slot before starting. 2. Start Link Test. 3. Switch Viewing and Controls to move each slot into the in-game link room. 4. Watch Link Activity for SIO mode changes or transfer attempts.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextSecondary
                     )
                     DetailRow("Slot 1 name", slot1Rom?.filename ?: "none")
                     DetailRow("Slot 1 path", slot1Rom?.localRomPath ?: "none")
@@ -712,6 +839,26 @@ private fun formatDuration(seconds: Long): String {
     val minutes = seconds / 60
     val remainder = seconds % 60
     return "${minutes}m ${remainder}s"
+}
+
+private fun mainSaveFile(rom: RomHandle?): File? {
+    val root = rom?.gameRootPath ?: return null
+    return File(File(root, "battery"), "current.sav")
+}
+
+private fun linkSaveFile(slotRoot: String): File {
+    return File(File(slotRoot, "battery"), "current.sav")
+}
+
+private fun fileSummary(file: File?): String {
+    if (file == null) {
+        return "missing: no ROM save root"
+    }
+    return if (file.exists()) {
+        "exists (${file.length()} bytes) - ${file.absolutePath}"
+    } else {
+        "missing - ${file.absolutePath}"
+    }
 }
 
 private const val INPUT_A = 1 shl 0

@@ -38,6 +38,8 @@ private:
     struct LockstepContext {
         std::mutex mutex;
         std::array<int32_t, 4> cycles {};
+        std::atomic<std::uint64_t> signalCount {0};
+        std::atomic<std::uint64_t> waitCount {0};
     };
 
     bool prepareLockstep();
@@ -70,7 +72,12 @@ private:
     int slot1WindowHeight_ = 0;
     std::uint64_t slot1RenderedFrames_ = 0;
     std::uint64_t slot2RenderedFrames_ = 0;
+    std::uint64_t transferAttemptCount_ = 0;
+    std::uint64_t transferCompleteCount_ = 0;
     int activeRenderSlot_ = 1;
+    int previousTransferPhase_ = 0;
+    int previousSioMode1_ = -1;
+    int previousSioMode2_ = -1;
     std::atomic<std::uint32_t> slot1InputMask_ {0};
     std::atomic<std::uint32_t> slot2InputMask_ {0};
     bool lockstepReady_ = false;

@@ -68,6 +68,13 @@ std::string LocalLinkSession::start(
     baseTestDir_ = baseTestDir;
     slot1RenderedFrames_ = 0;
     slot2RenderedFrames_ = 0;
+    transferAttemptCount_ = 0;
+    transferCompleteCount_ = 0;
+    previousTransferPhase_ = 0;
+    previousSioMode1_ = -1;
+    previousSioMode2_ = -1;
+    lockstepContext_.signalCount.store(0, std::memory_order_relaxed);
+    lockstepContext_.waitCount.store(0, std::memory_order_relaxed);
     const std::string slot1Root = baseTestDir_ + "/slot_1";
     const std::string slot2Root = baseTestDir_ + "/slot_2";
 
@@ -235,6 +242,38 @@ void LocalLinkSession::schedulerTick() {
     slot2_.setInputMask(slot2InputMask_.load(std::memory_order_relaxed));
     slot1_.runFrame();
     slot2_.runFrame();
+    const int transferPhase = static_cast<int>(lockstep_.d.transferActive);
+    if (previousTransferPhase_ == 0 && transferPhase != 0) {
+        ++transferAttemptCount_;
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            kTag,
+            "local link transfer activity started: phase=%d attempts=%llu",
+            transferPhase,
+            static_cast<unsigned long long>(transferAttemptCount_)
+        );
+    } else if (previousTransferPhase_ != 0 && transferPhase == 0) {
+        ++transferCompleteCount_;
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            kTag,
+            "local link transfer activity completed: completions=%llu",
+            static_cast<unsigned long long>(transferCompleteCount_)
+        );
+    }
+    previousTransferPhase_ = transferPhase;
+
+    const int sioMode1 = slot1_.sioMode();
+    const int sioMode2 = slot2_.sioMode();
+    if (sioMode1 != previousSioMode1_) {
+        __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 SIO mode changed: %d -> %d", previousSioMode1_, sioMode1);
+        previousSioMode1_ = sioMode1;
+    }
+    if (sioMode2 != previousSioMode2_) {
+        __android_log_print(ANDROID_LOG_INFO, kTag, "slot 2 SIO mode changed: %d -> %d", previousSioMode2_, sioMode2);
+        previousSioMode2_ = sioMode2;
+    }
+
     if (slot1Window_ != nullptr && slot1WindowWidth_ > 0 && slot1WindowHeight_ > 0) {
         LinkedEmulatorSlot& renderSlot = activeRenderSlot_ == 2 ? slot2_ : slot1_;
         if (renderSlot.renderFrameToWindow(slot1Window_, slot1WindowWidth_, slot1WindowHeight_)) {
@@ -249,14 +288,18 @@ void LocalLinkSession::schedulerTick() {
         __android_log_print(
             ANDROID_LOG_INFO,
             kTag,
-            "scheduler running: slot1Frames=%llu slot2Frames=%llu renderSlot=%d attached=%d transferPhase=%d sio1=%d sio2=%d",
+            "scheduler running: slot1Frames=%llu slot2Frames=%llu renderSlot=%d attached=%d transferPhase=%d attempts=%llu completions=%llu sio1=%d sio2=%d signals=%llu waits=%llu",
             static_cast<unsigned long long>(slot1_.framesRun()),
             static_cast<unsigned long long>(slot2_.framesRun()),
             activeRenderSlot_,
             lockstep_.d.attached,
-            static_cast<int>(lockstep_.d.transferActive),
-            slot1_.sioMode(),
-            slot2_.sioMode()
+            transferPhase,
+            static_cast<unsigned long long>(transferAttemptCount_),
+            static_cast<unsigned long long>(transferCompleteCount_),
+            sioMode1,
+            sioMode2,
+            static_cast<unsigned long long>(lockstepContext_.signalCount.load(std::memory_order_relaxed)),
+            static_cast<unsigned long long>(lockstepContext_.waitCount.load(std::memory_order_relaxed))
         );
     }
 }
@@ -273,6 +316,10 @@ std::string LocalLinkSession::statusLocked() const {
         << " renderSlot=" << activeRenderSlot_
         << " attached=" << lockstep_.d.attached
         << " transferPhase=" << static_cast<int>(lockstep_.d.transferActive)
+        << " transferAttempts=" << transferAttemptCount_
+        << " transferCompletions=" << transferCompleteCount_
+        << " lockstepSignals=" << lockstepContext_.signalCount.load(std::memory_order_relaxed)
+        << " lockstepWaits=" << lockstepContext_.waitCount.load(std::memory_order_relaxed)
         << " sioMode1=" << slot1_.sioMode()
         << " sioMode2=" << slot2_.sioMode();
     return out.str();
@@ -301,11 +348,19 @@ void LocalLinkSession::unlockCallback(mLockstep* lockstep) {
     }
 }
 
-bool LocalLinkSession::signalCallback(mLockstep*, unsigned) {
+bool LocalLinkSession::signalCallback(mLockstep* lockstep, unsigned) {
+    auto* context = static_cast<LockstepContext*>(lockstep->context);
+    if (context) {
+        context->signalCount.fetch_add(1, std::memory_order_relaxed);
+    }
     return true;
 }
 
-bool LocalLinkSession::waitCallback(mLockstep*, unsigned) {
+bool LocalLinkSession::waitCallback(mLockstep* lockstep, unsigned) {
+    auto* context = static_cast<LockstepContext*>(lockstep->context);
+    if (context) {
+        context->waitCount.fetch_add(1, std::memory_order_relaxed);
+    }
     return true;
 }
 

@@ -392,3 +392,59 @@ Recommended Phase 1F:
   - possible stall
 - Add optional pre-link battery-save backup for both `link_tests` slots before starting a session.
 - Test whether two local user-provided compatible ROMs can enter an in-game cable room and generate transfer activity.
+
+## Phase 1F Findings
+
+Phase 1F prepares the hidden local-link harness for real in-game cable detection testing.
+
+Save preparation:
+
+- Local Link Debug can copy a selected ROM's normal battery save into either link-test slot.
+- Source path:
+
+```text
+files/games/{rom_id}/battery/current.sav
+```
+
+- Destination paths:
+
+```text
+files/link_tests/slot_1/battery/current.sav
+files/link_tests/slot_2/battery/current.sav
+```
+
+- The main save is only read. The debug reset buttons delete only the link-test slot saves.
+- Copy/reset buttons are disabled while the local link session is running, so active cores are not racing against file changes.
+- The debug screen reports whether each main/link save exists and shows file sizes.
+
+Link activity instrumentation:
+
+- Status now includes:
+  - Slot 1 SIO mode
+  - Slot 2 SIO mode
+  - transfer phase
+  - transfer attempt count
+  - transfer completion count
+  - lockstep signal count
+  - lockstep wait count
+  - scheduler ticks
+  - frame counts
+  - rendered-frame counts
+- Transfer attempts are counted when the shared lockstep transfer phase changes from idle to active.
+- Transfer completions are counted when the transfer phase returns from active to idle.
+- Signal/wait counts are counted inside the lockstep callbacks controlled by our `LocalLinkSession`.
+- SIO mode changes are logged for both slots.
+
+Current limitations:
+
+- Transfer counters are safe instrumentation around the lockstep state we own, not a full semantic decoder of every game-level serial transaction.
+- No online transport exists.
+- No public multiplayer UI exists.
+- No save states are supported during active local-link debug sessions.
+
+Recommended Phase 1G:
+
+- Use this harness with two user-provided compatible saves and guide both games into the in-game link room.
+- Record whether SIO mode changes and transfer counters move during cable-room entry.
+- If counters stay idle, inspect mGBA SIO driver installation order and the specific modes used by the target game.
+- If counters move but games do not connect, investigate scheduler timing and lockstep callback behavior.
