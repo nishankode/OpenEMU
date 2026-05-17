@@ -522,6 +522,22 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetLocalLinkInputMask(
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetLocalLinkInput(
+    JNIEnv*,
+    jobject,
+    jint slot,
+    jint input_mask
+) {
+    gLocalLinkSession.setInputMask(static_cast<int>(slot), static_cast<std::uint32_t>(input_mask));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeClearLocalLinkInput(JNIEnv*, jobject) {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "hidden local link clear all input requested");
+    gLocalLinkSession.clearInputMasks();
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetLocalLinkRenderSlot(
     JNIEnv*,
     jobject,

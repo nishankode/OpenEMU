@@ -5,10 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include <mgba/core/version.h>
 
-MGBA_EXPORT const char* const gitCommit = "83a4b84895a457949534907bd529460e1383eee7-dirty";
-MGBA_EXPORT const char* const gitCommitShort = "83a4b84-dirty";
+MGBA_EXPORT const char* const gitCommit = "e54041d73763510e82d887669b1d0a1e9c36c98e-dirty";
+MGBA_EXPORT const char* const gitCommitShort = "e54041d-dirty";
 MGBA_EXPORT const char* const gitBranch = "main";
-MGBA_EXPORT const int gitRevision = 19;
+MGBA_EXPORT const int gitRevision = 20;
 MGBA_EXPORT const char* const binaryName = "linkroom_mgba";
 MGBA_EXPORT const char* const projectName = "mGBA";
-MGBA_EXPORT const char* const projectVersion = "0.10-main-19-83a4b84-dirty";
+MGBA_EXPORT const char* const projectVersion = "0.10-main-20-e54041d-dirty";

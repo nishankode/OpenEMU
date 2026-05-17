@@ -288,6 +288,14 @@ object NativeEmulatorBridge {
         nativeSetLocalLinkInputMask(slot, inputMask)
     }
 
+    fun setLocalLinkInput(slotIndex: Int, buttonMask: Int) = callNative("setLocalLinkInput") {
+        nativeSetLocalLinkInput(slotIndex, buttonMask)
+    }
+
+    fun clearLocalLinkInput() = callNative("clearLocalLinkInput") {
+        nativeClearLocalLinkInput()
+    }
+
     fun setLocalLinkRenderSlot(slot: Int) = callNative("setLocalLinkRenderSlot") {
         nativeSetLocalLinkRenderSlot(slot)
     }
@@ -335,5 +343,7 @@ object NativeEmulatorBridge {
     private external fun nativeResizeLocalLinkSurface(width: Int, height: Int)
     private external fun nativeDetachLocalLinkSurface()
     private external fun nativeSetLocalLinkInputMask(slot: Int, inputMask: Int)
+    private external fun nativeSetLocalLinkInput(slotIndex: Int, buttonMask: Int)
+    private external fun nativeClearLocalLinkInput()
     private external fun nativeSetLocalLinkRenderSlot(slot: Int)
 }

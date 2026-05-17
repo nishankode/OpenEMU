@@ -7,6 +7,7 @@
 #include <mgba/internal/gba/sio/lockstep.h>
 
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -27,6 +28,7 @@ public:
     void stop();
     std::string status() const;
     void setInputMask(int slot, std::uint32_t inputMask);
+    void clearInputMasks();
     void attachSlot1Surface(ANativeWindow* window);
     void resizeSlot1Surface(int width, int height);
     void detachSlot1Surface();
@@ -69,6 +71,8 @@ private:
     std::uint64_t slot1RenderedFrames_ = 0;
     std::uint64_t slot2RenderedFrames_ = 0;
     int activeRenderSlot_ = 1;
+    std::atomic<std::uint32_t> slot1InputMask_ {0};
+    std::atomic<std::uint32_t> slot2InputMask_ {0};
     bool lockstepReady_ = false;
     bool running_ = false;
 };

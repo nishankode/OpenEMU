@@ -136,13 +136,13 @@ fun LocalLinkDebugScreen(
 
     LaunchedEffect(activeViewSlot) {
         Log.i(TAG, "Switching local link video view to Slot $activeViewSlot")
+        NativeEmulatorBridge.clearLocalLinkInput()
         NativeEmulatorBridge.setLocalLinkRenderSlot(activeViewSlot)
     }
 
     LaunchedEffect(activeInputSlot) {
         Log.i(TAG, "Switching local link input target to Slot $activeInputSlot")
-        NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-        NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+        NativeEmulatorBridge.clearLocalLinkInput()
     }
 
     val slot1Rom = playableRoms.firstOrNull { it.id == selectedSlot1Id }
@@ -159,13 +159,11 @@ fun LocalLinkDebugScreen(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
-                    NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-                    NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+                    NativeEmulatorBridge.clearLocalLinkInput()
                     Log.i(TAG, "Local link debug paused; inputs cleared")
                 }
                 Lifecycle.Event.ON_DESTROY -> {
-                    NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-                    NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+                    NativeEmulatorBridge.clearLocalLinkInput()
                     NativeEmulatorBridge.detachLocalLinkSurface()
                     NativeEmulatorBridge.stopLocalLinkTest()
                 }
@@ -175,8 +173,7 @@ fun LocalLinkDebugScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-            NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+            NativeEmulatorBridge.clearLocalLinkInput()
             NativeEmulatorBridge.detachLocalLinkSurface()
             NativeEmulatorBridge.stopLocalLinkTest()
         }
@@ -246,7 +243,10 @@ fun LocalLinkDebugScreen(
                     SlotToggleRow(
                         label = "Viewing",
                         selectedSlot = activeViewSlot,
-                        onSelected = { activeViewSlot = it }
+                        onSelected = { slot ->
+                            NativeEmulatorBridge.clearLocalLinkInput()
+                            activeViewSlot = slot
+                        }
                     )
                     Box(
                         modifier = Modifier
@@ -324,9 +324,8 @@ fun LocalLinkDebugScreen(
                             OutlinedButton(
                                 onClick = {
                                     Log.i(TAG, "Stopping local link debug")
+                                    NativeEmulatorBridge.clearLocalLinkInput()
                                     NativeEmulatorBridge.stopLocalLinkTest()
-                                    NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-                                    NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
                                     status = NativeEmulatorBridge.getLocalLinkStatus()
                                     startedAtMillis = 0L
                                 },
@@ -348,9 +347,12 @@ fun LocalLinkDebugScreen(
                         fontWeight = FontWeight.Bold
                     )
                     SlotToggleRow(
-                        label = "Input target",
+                        label = "Controls",
                         selectedSlot = activeInputSlot,
-                        onSelected = { activeInputSlot = it }
+                        onSelected = { slot ->
+                            NativeEmulatorBridge.clearLocalLinkInput()
+                            activeInputSlot = slot
+                        }
                     )
                     LocalLinkControlOverlay(enabled = isRunning, activeSlot = activeInputSlot)
                     Text(
@@ -496,8 +498,7 @@ private fun LocalLinkControlOverlay(enabled: Boolean, activeSlot: Int) {
 
     LaunchedEffect(enabled, activeSlot) {
         pressedButtons = emptySet()
-        NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
-        NativeEmulatorBridge.setLocalLinkInputMask(2, 0)
+        NativeEmulatorBridge.clearLocalLinkInput()
     }
 
     fun setPressed(bit: Int, pressed: Boolean) {
@@ -509,7 +510,7 @@ private fun LocalLinkControlOverlay(enabled: Boolean, activeSlot: Int) {
         pressedButtons = updatedButtons
         val inputMask = if (enabled) updatedButtons.fold(0) { mask, button -> mask or button } else 0
         Log.d(TAG, "Slot $activeSlot input mask: 0x${inputMask.toString(16)}")
-        NativeEmulatorBridge.setLocalLinkInputMask(activeSlot, inputMask)
+        NativeEmulatorBridge.setLocalLinkInput(activeSlot, inputMask)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -518,44 +519,52 @@ private fun LocalLinkControlOverlay(enabled: Boolean, activeSlot: Int) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            LocalLinkDPad(enabled = enabled, onPressedChange = ::setPressed)
-            LocalLinkShoulderAndFaceButtons(enabled = enabled, onPressedChange = ::setPressed)
+            LocalLinkDPad(enabled = enabled, activeSlot = activeSlot, onPressedChange = ::setPressed)
+            LocalLinkShoulderAndFaceButtons(enabled = enabled, activeSlot = activeSlot, onPressedChange = ::setPressed)
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            LocalLinkControlButton("Select", INPUT_SELECT, enabled, ::setPressed, wide = true)
+            LocalLinkControlButton("Select", INPUT_SELECT, enabled, activeSlot, ::setPressed, wide = true)
             Spacer(modifier = Modifier.width(16.dp))
-            LocalLinkControlButton("Start", INPUT_START, enabled, ::setPressed, wide = true)
+            LocalLinkControlButton("Start", INPUT_START, enabled, activeSlot, ::setPressed, wide = true)
         }
     }
 }
 
 @Composable
-private fun LocalLinkDPad(enabled: Boolean, onPressedChange: (Int, Boolean) -> Unit) {
+private fun LocalLinkDPad(
+    enabled: Boolean,
+    activeSlot: Int,
+    onPressedChange: (Int, Boolean) -> Unit
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        LocalLinkControlButton("Up", INPUT_UP, enabled, onPressedChange)
+        LocalLinkControlButton("Up", INPUT_UP, enabled, activeSlot, onPressedChange)
         Row {
-            LocalLinkControlButton("Left", INPUT_LEFT, enabled, onPressedChange)
+            LocalLinkControlButton("Left", INPUT_LEFT, enabled, activeSlot, onPressedChange)
             Spacer(modifier = Modifier.width(36.dp))
-            LocalLinkControlButton("Right", INPUT_RIGHT, enabled, onPressedChange)
+            LocalLinkControlButton("Right", INPUT_RIGHT, enabled, activeSlot, onPressedChange)
         }
-        LocalLinkControlButton("Down", INPUT_DOWN, enabled, onPressedChange)
+        LocalLinkControlButton("Down", INPUT_DOWN, enabled, activeSlot, onPressedChange)
     }
 }
 
 @Composable
-private fun LocalLinkShoulderAndFaceButtons(enabled: Boolean, onPressedChange: (Int, Boolean) -> Unit) {
+private fun LocalLinkShoulderAndFaceButtons(
+    enabled: Boolean,
+    activeSlot: Int,
+    onPressedChange: (Int, Boolean) -> Unit
+) {
     Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            LocalLinkControlButton("L", INPUT_L, enabled, onPressedChange)
-            LocalLinkControlButton("R", INPUT_R, enabled, onPressedChange)
+            LocalLinkControlButton("L", INPUT_L, enabled, activeSlot, onPressedChange)
+            LocalLinkControlButton("R", INPUT_R, enabled, activeSlot, onPressedChange)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            LocalLinkControlButton("B", INPUT_B, enabled, onPressedChange)
-            LocalLinkControlButton("A", INPUT_A, enabled, onPressedChange)
+            LocalLinkControlButton("B", INPUT_B, enabled, activeSlot, onPressedChange)
+            LocalLinkControlButton("A", INPUT_A, enabled, activeSlot, onPressedChange)
         }
     }
 }
@@ -565,6 +574,7 @@ private fun LocalLinkControlButton(
     label: String,
     bit: Int,
     enabled: Boolean,
+    activeSlot: Int,
     onPressedChange: (Int, Boolean) -> Unit,
     wide: Boolean = false
 ) {
@@ -585,7 +595,7 @@ private fun LocalLinkControlButton(
                 color = if (isFaceButton) AppAccent.copy(alpha = 0.68f) else AppBorder,
                 shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
             )
-            .pointerInput(bit, enabled) {
+            .pointerInput(bit, enabled, activeSlot) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     if (enabled) {

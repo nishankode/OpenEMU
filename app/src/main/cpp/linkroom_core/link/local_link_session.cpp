@@ -117,6 +117,7 @@ void LocalLinkSession::stop() {
         __android_log_print(ANDROID_LOG_INFO, kTag, "stopping local link session");
     }
     running_ = false;
+    clearInputMasks();
     slot2_.release();
     slot1_.release();
     releaseLockstep();
@@ -129,14 +130,19 @@ std::string LocalLinkSession::status() const {
 }
 
 void LocalLinkSession::setInputMask(int slot, std::uint32_t inputMask) {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (slot == 1) {
-        slot1_.setInputMask(inputMask);
+        slot1InputMask_.store(inputMask, std::memory_order_relaxed);
         __android_log_print(ANDROID_LOG_DEBUG, kTag, "slot 1 input mask: 0x%03x", inputMask);
     } else if (slot == 2) {
-        slot2_.setInputMask(inputMask);
+        slot2InputMask_.store(inputMask, std::memory_order_relaxed);
         __android_log_print(ANDROID_LOG_DEBUG, kTag, "slot 2 input mask: 0x%03x", inputMask);
     }
+}
+
+void LocalLinkSession::clearInputMasks() {
+    slot1InputMask_.store(0, std::memory_order_relaxed);
+    slot2InputMask_.store(0, std::memory_order_relaxed);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "local link input cleared for both slots");
 }
 
 void LocalLinkSession::attachSlot1Surface(ANativeWindow* window) {
@@ -225,6 +231,8 @@ void LocalLinkSession::schedulerTick() {
     if (!running_ || !slot1_.isLoaded() || !slot2_.isLoaded()) {
         return;
     }
+    slot1_.setInputMask(slot1InputMask_.load(std::memory_order_relaxed));
+    slot2_.setInputMask(slot2InputMask_.load(std::memory_order_relaxed));
     slot1_.runFrame();
     slot2_.runFrame();
     if (slot1Window_ != nullptr && slot1WindowWidth_ > 0 && slot1WindowHeight_ > 0) {
