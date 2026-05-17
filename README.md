@@ -16,8 +16,9 @@ This project is a feasibility scaffold only. It includes:
 - mGBA native video rendering through JNI and CMake
 - Minimal on-screen controls for D-pad, A/B, L/R, Start, and Select
 - In-game battery save load/flush for games that support normal saves
+- Basic stereo PCM audio output through Android AudioTrack
 
-This phase can boot, render, accept basic touch input, and persist normal in-game battery saves for user-provided `.gba` files through mGBA. No audio, save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
+This phase can boot, render, play basic audio, accept basic touch input, and persist normal in-game battery saves for user-provided `.gba` files through mGBA. No save states, fast-forward, link cable, online trading, accounts, backend, billing, cloud sync, ROM downloads, ROMs, or copyrighted assets are included.
 
 ## Requirements
 
@@ -60,16 +61,17 @@ The output should list one device with the `device` state. If it says `unauthori
 9. Continue past onboarding.
 10. Tap import and select your own legally obtained `.gba` or `.zip` file.
 11. Tap the selected `.gba` file in the library to open the native player screen.
-12. Use the on-screen controls to verify button input reaches the game.
-13. Use the game's normal in-game save flow, then leave the emulator to flush `current.sav`.
-14. Reopen the same ROM and confirm the game sees the previous in-game save.
-15. Background and resume the app once to confirm the surface detaches and reattaches cleanly.
-16. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
+12. Confirm video renders and basic game audio is audible.
+13. Use the on-screen controls to verify button input reaches the game.
+14. Use the game's normal in-game save flow, then leave the emulator to flush `current.sav`.
+15. Reopen the same ROM and confirm the game sees the previous in-game save.
+16. Background and resume the app once to confirm video/audio pause and resume cleanly.
+17. Close and reopen the app to confirm onboarding stays complete and the imported ROM metadata returns.
 
 For app state and native runtime logs:
 
 ```powershell
-adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer MgbaCoreAdapter GameLibraryViewModel RomPicker
+adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRuntime EmulatorSurface LinkRoomNative LinkRoomRenderer MgbaCoreAdapter GameLibraryViewModel RomPicker AudioTrack
 ```
 
 ## Notes
@@ -82,6 +84,7 @@ adb logcat -s AppPreferences RomMetadataStore NativeEmulatorBridge EmulatorRunti
 - Before replacing an existing battery save, the app attempts a `backup-before-flush-{timestamp}.sav` copy in the same battery directory.
 - Save states are not implemented yet. Closing and reopening the ROM starts a fresh emulator session that can load the prior in-game battery save.
 - The native surface renders mGBA video after a successful `.gba` load and keeps the placeholder checkerboard as a fallback.
+- Basic audio is streamed from mGBA into a native ring buffer and played with Android AudioTrack. If audio initialization fails on a device, video and controls should continue to work.
 - Touch input is limited to simple on-screen controls. External controllers, haptics, and layout customization are not implemented yet.
 - If the native library cannot be loaded, the app should show a graceful placeholder status instead of crashing.
 - Future emulator integration should stay behind `EmulatorRuntime` and `NativeEmulatorBridge`.

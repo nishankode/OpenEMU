@@ -2,8 +2,10 @@
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <jni.h>
+#include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -253,6 +255,45 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetSaveStatus(JNIEnv* e
     std::lock_guard<std::mutex> lock(gMutex);
     const std::string status = gSession.saveStatus();
     return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetAudioStatus(JNIEnv* env, jobject) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    const std::string status = gSession.audioStatus();
+    return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeReadAudio(
+    JNIEnv* env,
+    jobject,
+    jshortArray buffer,
+    jint max_samples
+) {
+    if (buffer == nullptr || max_samples <= 0) {
+        return 0;
+    }
+
+    const jsize bufferLength = env->GetArrayLength(buffer);
+    const jint requestedSamples = std::min(max_samples, static_cast<jint>(bufferLength));
+    if (requestedSamples <= 0) {
+        return 0;
+    }
+
+    jshort* samples = env->GetShortArrayElements(buffer, nullptr);
+    if (samples == nullptr) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "audio read failed: JNI short array unavailable");
+        return 0;
+    }
+
+    jint samplesRead = 0;
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        samplesRead = gSession.readAudio(reinterpret_cast<std::int16_t*>(samples), requestedSamples);
+    }
+    env->ReleaseShortArrayElements(buffer, samples, 0);
+    return samplesRead;
 }
 
 extern "C" JNIEXPORT jstring JNICALL

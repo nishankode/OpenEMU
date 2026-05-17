@@ -110,6 +110,35 @@ object NativeEmulatorBridge {
         }
     }
 
+    fun getAudioStatus(): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping getAudioStatus because native library is unavailable.")
+            return "audio unavailable: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeGetAudioStatus()
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: getAudioStatus", error)
+        }.getOrElse { error ->
+            "audio status unavailable: ${error.javaClass.simpleName}"
+        }
+    }
+
+    fun readAudio(buffer: ShortArray, maxSamples: Int): Int {
+        val failure = loadFailure
+        if (failure != null || buffer.isEmpty() || maxSamples <= 0) {
+            return 0
+        }
+
+        return runCatching {
+            nativeReadAudio(buffer, maxSamples.coerceAtMost(buffer.size))
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: readAudio", error)
+        }.getOrDefault(0)
+    }
+
     fun getCoreStatus(): String {
         val failure = loadFailure
         if (failure != null) {
@@ -150,5 +179,7 @@ object NativeEmulatorBridge {
     private external fun nativeRelease()
     private external fun nativeGetRuntimeStatus(): String
     private external fun nativeGetSaveStatus(): String
+    private external fun nativeGetAudioStatus(): String
+    private external fun nativeReadAudio(buffer: ShortArray, maxSamples: Int): Int
     private external fun nativeGetCoreStatus(): String
 }

@@ -22,6 +22,7 @@ public:
     RomLoadResult loadRom(const std::string& romPath, const std::string& gameRootPath);
     bool runFrame();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
+    int readAudio(std::int16_t* output, int maxSamples);
     void setInputMask(std::uint32_t inputMask);
     std::string flushBatterySave();
     void pause();
@@ -33,6 +34,7 @@ public:
     bool isPaused() const;
     std::string statusMessage() const;
     std::string saveStatus() const;
+    std::string audioStatus() const;
 
 private:
     MgbaCoreAdapter coreAdapter_;

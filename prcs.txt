@@ -1,0 +1,3 @@
+adb logcat -s NativeEmulatorBridge EmulatorRuntime LinkRoomNative
+
+.\gradlew :app:installDebug

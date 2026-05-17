@@ -42,6 +42,7 @@ public:
     RomLoadResult loadAndBootGba(const std::string& romPath, const SavePaths& savePaths);
     bool runFrame();
     bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
+    int readAudio(std::int16_t* output, int maxSamples);
     void setInputMask(std::uint32_t inputMask);
     std::string flushBatterySave();
     void pause();
@@ -50,15 +51,29 @@ public:
     bool hasLoadedRom() const;
     bool isPaused() const;
     std::string saveStatus() const;
+    std::string audioStatus() const;
 
 private:
+    void configureAudio();
+    void drainAudio();
+    void pushAudioSamples(const std::int16_t* samples, size_t sampleCount);
+    void resetAudioBuffer();
+
     mCore* core_ = nullptr;
     std::vector<std::uint32_t> videoBuffer_;
+    std::vector<std::int16_t> audioRingBuffer_;
     std::string gameRootDirectory_;
     std::string batterySavePath_;
     std::string batteryDirectory_;
     std::string saveStatus_ = "save: no ROM loaded";
+    std::string audioStatus_ = "audio: no ROM loaded";
+    size_t audioReadIndex_ = 0;
+    size_t audioWriteIndex_ = 0;
+    size_t audioBufferedSamples_ = 0;
+    size_t audioOverruns_ = 0;
+    size_t audioUnderruns_ = 0;
     std::uint32_t inputMask_ = 0;
+    bool audioConfigured_ = false;
     bool paused_ = true;
     bool romLoaded_ = false;
 };

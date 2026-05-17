@@ -60,6 +60,9 @@ fun EmulatorScreen(
     var saveStatus by remember(rom?.id) {
         mutableStateOf("save: waiting for ROM load")
     }
+    var audioStatus by remember(rom?.id) {
+        mutableStateOf("audio: waiting for ROM load")
+    }
 
     DisposableEffect(runtime, rom?.id) {
         bootStatus = "loading: preparing emulator runtime"
@@ -79,6 +82,7 @@ fun EmulatorScreen(
             }
         }
         saveStatus = runtime.saveStatusMessage
+        audioStatus = runtime.audioStatusMessage
         onDispose { }
     }
 
@@ -91,15 +95,20 @@ fun EmulatorScreen(
     DisposableEffect(lifecycleOwner, runtime) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_RESUME -> bootStatus = runtime.resume()
+                Lifecycle.Event.ON_RESUME -> {
+                    bootStatus = runtime.resume()
+                    audioStatus = runtime.audioStatusMessage
+                }
                 Lifecycle.Event.ON_PAUSE -> {
                     bootStatus = runtime.pause()
                     saveStatus = runtime.saveStatusMessage
+                    audioStatus = runtime.audioStatusMessage
                 }
                 Lifecycle.Event.ON_DESTROY -> {
                     runtime.release()
                     bootStatus = "released: emulator runtime resources released"
                     saveStatus = runtime.saveStatusMessage
+                    audioStatus = runtime.audioStatusMessage
                 }
                 else -> Unit
             }
@@ -167,7 +176,12 @@ fun EmulatorScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Video frames render here after a .gba loads. Placeholder rendering remains the fallback for empty or failed loads.",
+                text = "Audio status: $audioStatus",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Video and basic audio run after a .gba loads. Placeholder rendering remains the fallback for empty or failed loads.",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(16.dp))

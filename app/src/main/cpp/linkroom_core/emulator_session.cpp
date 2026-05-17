@@ -45,6 +45,13 @@ bool EmulatorSession::renderFrameToWindow(ANativeWindow* window, int windowWidth
     return coreAdapter_.renderFrameToWindow(window, windowWidth, windowHeight);
 }
 
+int EmulatorSession::readAudio(std::int16_t* output, int maxSamples) {
+    if (released_ || output == nullptr || maxSamples <= 0) {
+        return 0;
+    }
+    return coreAdapter_.readAudio(output, maxSamples);
+}
+
 void EmulatorSession::setInputMask(std::uint32_t inputMask) {
     if (released_) {
         return;
@@ -107,6 +114,10 @@ std::string EmulatorSession::statusMessage() const {
 
 std::string EmulatorSession::saveStatus() const {
     return coreAdapter_.saveStatus();
+}
+
+std::string EmulatorSession::audioStatus() const {
+    return coreAdapter_.audioStatus();
 }
 
 } // namespace linkroom

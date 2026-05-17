@@ -1,8 +1,10 @@
 #include "mgba_core_adapter.h"
 
+#include <mgba/core/blip_buf.h>
 #include <mgba/core/core.h>
 #include <mgba/core/input.h>
 #include <mgba/core/interface.h>
+#include <mgba/internal/gba/audio.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba-util/vfs.h>
 
@@ -27,6 +29,9 @@ namespace {
 constexpr const char* kTag = "MgbaCoreAdapter";
 constexpr int kBootProbeFrames = 5;
 constexpr int kVideoStride = 256;
+constexpr int kAudioSampleRate = 48000;
+constexpr size_t kAudioBufferSamples = kAudioSampleRate * 2 * 2;
+constexpr size_t kMaxAudioDrainFrames = 4096;
 
 bool fileExists(const std::string& path) {
     struct stat info {};
@@ -150,7 +155,7 @@ std::string MgbaCoreAdapter::statusMessage() const {
 
 std::string MgbaCoreAdapter::linkedCoreStatus() const {
     return isCoreAvailable()
-        ? "mGBA core linked: true (0.10.5, GBA core compiled; video rendering enabled)"
+        ? "mGBA core linked: true (0.10.5, GBA core compiled; video/audio rendering enabled)"
         : "mGBA core linked: false";
 }
 
@@ -210,12 +215,13 @@ RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath, const 
         };
     }
 
-    // mGBA expects config and a video buffer before normal frame execution.
-    // Phase 0.2C1 renders this software buffer into the Android SurfaceView
-    // on the native emulation thread. Audio/input/saves are intentionally off.
+    // mGBA expects config and video/audio buffers before normal frame execution.
+    // Video is rendered into the Android SurfaceView. Audio is drained into a
+    // small native ring buffer for Kotlin AudioTrack playback.
     mCoreInitConfig(core_, "linkroom");
     videoBuffer_.assign(kVideoStride * VideoFrameBuffer::kGbaHeight, 0);
     core_->setVideoBuffer(core_, reinterpret_cast<color_t*>(videoBuffer_.data()), kVideoStride);
+    configureAudio();
     __android_log_print(
         ANDROID_LOG_INFO,
         kTag,
@@ -278,8 +284,12 @@ RomLoadResult MgbaCoreAdapter::loadAndBootGba(const std::string& romPath, const 
     core_->reset(core_);
     for (int frame = 0; frame < kBootProbeFrames; ++frame) {
         core_->runFrame(core_);
+        drainAudio();
     }
     paused_ = false;
+    if (audioConfigured_) {
+        audioStatus_ = "audio running: 48000 Hz stereo PCM16";
+    }
 
     __android_log_print(ANDROID_LOG_INFO, kTag, "ROM load succeeded; video rendering can start.");
     return {
@@ -295,7 +305,137 @@ bool MgbaCoreAdapter::runFrame() {
 
     core_->setKeys(core_, inputMask_);
     core_->runFrame(core_);
+    drainAudio();
     return true;
+}
+
+void MgbaCoreAdapter::configureAudio() {
+    if (core_ == nullptr) {
+        audioStatus_ = "audio unavailable: mGBA core is not initialized";
+        return;
+    }
+
+    core_->setAudioBufferSize(core_, kMaxAudioDrainFrames);
+    const double ratio = GBAAudioCalculateRatio(1.0f, 60.0f, 1.0f);
+    blip_t* left = core_->getAudioChannel(core_, 0);
+    blip_t* right = core_->getAudioChannel(core_, 1);
+    if (left == nullptr || right == nullptr) {
+        audioStatus_ = "audio unavailable: mGBA audio channels are missing";
+        __android_log_print(ANDROID_LOG_WARN, kTag, "%s", audioStatus_.c_str());
+        return;
+    }
+
+    blip_set_rates(left, core_->frequency(core_), kAudioSampleRate * ratio);
+    blip_set_rates(right, core_->frequency(core_), kAudioSampleRate * ratio);
+    audioRingBuffer_.assign(kAudioBufferSamples, 0);
+    audioReadIndex_ = 0;
+    audioWriteIndex_ = 0;
+    audioBufferedSamples_ = 0;
+    audioOverruns_ = 0;
+    audioUnderruns_ = 0;
+    audioConfigured_ = true;
+    audioStatus_ = "audio initialized: 48000 Hz stereo PCM16";
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kTag,
+        "Audio init: sampleRate=%d ringBufferSamples=%zu blipRatio=%.6f",
+        kAudioSampleRate,
+        audioRingBuffer_.size(),
+        ratio
+    );
+}
+
+void MgbaCoreAdapter::drainAudio() {
+    if (!audioConfigured_ || core_ == nullptr || audioRingBuffer_.empty()) {
+        return;
+    }
+
+    blip_t* left = core_->getAudioChannel(core_, 0);
+    blip_t* right = core_->getAudioChannel(core_, 1);
+    if (left == nullptr || right == nullptr) {
+        audioStatus_ = "audio failed: mGBA audio channel disappeared";
+        return;
+    }
+
+    const int leftAvailable = blip_samples_avail(left);
+    const int rightAvailable = blip_samples_avail(right);
+    const int framesAvailable = std::min({leftAvailable, rightAvailable, static_cast<int>(kMaxAudioDrainFrames)});
+    if (framesAvailable <= 0) {
+        return;
+    }
+
+    std::vector<std::int16_t> interleaved(static_cast<size_t>(framesAvailable) * 2);
+    const int produced = blip_read_samples(left, interleaved.data(), framesAvailable, true);
+    blip_read_samples(right, interleaved.data() + 1, produced, true);
+    pushAudioSamples(interleaved.data(), static_cast<size_t>(produced) * 2);
+}
+
+void MgbaCoreAdapter::pushAudioSamples(const std::int16_t* samples, size_t sampleCount) {
+    if (samples == nullptr || sampleCount == 0 || audioRingBuffer_.empty()) {
+        return;
+    }
+
+    const size_t capacity = audioRingBuffer_.size();
+    if (sampleCount > capacity) {
+        samples += sampleCount - capacity;
+        sampleCount = capacity;
+    }
+
+    const size_t freeSamples = capacity - audioBufferedSamples_;
+    if (sampleCount > freeSamples) {
+        const size_t samplesToDrop = sampleCount - freeSamples;
+        audioReadIndex_ = (audioReadIndex_ + samplesToDrop) % capacity;
+        audioBufferedSamples_ -= samplesToDrop;
+        ++audioOverruns_;
+        if (audioOverruns_ <= 5 || audioOverruns_ % 120 == 0) {
+            __android_log_print(
+                ANDROID_LOG_WARN,
+                kTag,
+                "Audio overrun: droppedSamples=%zu overruns=%zu",
+                samplesToDrop,
+                audioOverruns_
+            );
+        }
+    }
+
+    for (size_t i = 0; i < sampleCount; ++i) {
+        audioRingBuffer_[audioWriteIndex_] = samples[i];
+        audioWriteIndex_ = (audioWriteIndex_ + 1) % capacity;
+    }
+    audioBufferedSamples_ += sampleCount;
+}
+
+int MgbaCoreAdapter::readAudio(std::int16_t* output, int maxSamples) {
+    if (output == nullptr || maxSamples <= 0 || !audioConfigured_ || audioRingBuffer_.empty()) {
+        return 0;
+    }
+
+    const size_t capacity = audioRingBuffer_.size();
+    const size_t samplesToRead = std::min(static_cast<size_t>(maxSamples), audioBufferedSamples_);
+    if (samplesToRead == 0) {
+        ++audioUnderruns_;
+        if (audioUnderruns_ <= 5 || audioUnderruns_ % 240 == 0) {
+            __android_log_print(ANDROID_LOG_DEBUG, kTag, "Audio underrun: count=%zu", audioUnderruns_);
+        }
+        return 0;
+    }
+
+    for (size_t i = 0; i < samplesToRead; ++i) {
+        output[i] = audioRingBuffer_[audioReadIndex_];
+        audioReadIndex_ = (audioReadIndex_ + 1) % capacity;
+    }
+    audioBufferedSamples_ -= samplesToRead;
+    return static_cast<int>(samplesToRead);
+}
+
+void MgbaCoreAdapter::resetAudioBuffer() {
+    audioRingBuffer_.clear();
+    audioReadIndex_ = 0;
+    audioWriteIndex_ = 0;
+    audioBufferedSamples_ = 0;
+    audioOverruns_ = 0;
+    audioUnderruns_ = 0;
+    audioConfigured_ = false;
 }
 
 bool MgbaCoreAdapter::renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight) {
@@ -448,11 +588,17 @@ std::string MgbaCoreAdapter::flushBatterySave() {
 
 void MgbaCoreAdapter::pause() {
     paused_ = true;
+    if (audioConfigured_) {
+        audioStatus_ = "audio paused";
+    }
 }
 
 void MgbaCoreAdapter::resume() {
     if (core_ != nullptr) {
         paused_ = false;
+        if (audioConfigured_) {
+            audioStatus_ = "audio running: 48000 Hz stereo PCM16";
+        }
     }
 }
 
@@ -467,12 +613,14 @@ void MgbaCoreAdapter::release() {
         core_ = nullptr;
     }
     videoBuffer_.clear();
+    resetAudioBuffer();
     gameRootDirectory_.clear();
     batterySavePath_.clear();
     batteryDirectory_.clear();
     inputMask_ = 0;
     romLoaded_ = false;
     paused_ = true;
+    audioStatus_ = "audio released";
 }
 
 bool MgbaCoreAdapter::hasLoadedRom() const {
@@ -485,6 +633,20 @@ bool MgbaCoreAdapter::isPaused() const {
 
 std::string MgbaCoreAdapter::saveStatus() const {
     return saveStatus_;
+}
+
+std::string MgbaCoreAdapter::audioStatus() const {
+    if (!audioConfigured_) {
+        return audioStatus_;
+    }
+
+    std::ostringstream message;
+    message << audioStatus_
+            << " (bufferedSamples=" << audioBufferedSamples_
+            << ", underruns=" << audioUnderruns_
+            << ", overruns=" << audioOverruns_
+            << ")";
+    return message.str();
 }
 
 } // namespace linkroom
