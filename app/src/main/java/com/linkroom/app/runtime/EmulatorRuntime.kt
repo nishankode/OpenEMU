@@ -118,6 +118,36 @@ class EmulatorRuntime {
         return NativeEmulatorBridge.getFastForwardStatus()
     }
 
+    fun saveState(slot: Int, gameRootPath: String): String {
+        if (released.get()) {
+            return "state save failed: emulator runtime was already released"
+        }
+
+        val stateFile = stateFileForSlot(gameRootPath, slot)
+            ?: return "state save failed: invalid slot"
+        val stateDirectory = stateFile.parentFile
+        val directoryReady = stateDirectory?.exists() == true || stateDirectory?.mkdirs() == true
+        Log.i(TAG, "Save state request: slot=$slot path=${stateFile.absolutePath} directoryReady=$directoryReady")
+        if (!directoryReady) {
+            return "state save failed: unable to prepare state directory"
+        }
+        return NativeEmulatorBridge.saveState(slot, stateFile.absolutePath)
+    }
+
+    fun loadState(slot: Int, gameRootPath: String): String {
+        if (released.get()) {
+            return "state load failed: emulator runtime was already released"
+        }
+
+        val stateFile = stateFileForSlot(gameRootPath, slot)
+            ?: return "state load failed: invalid slot"
+        Log.i(TAG, "Load state request: slot=$slot path=${stateFile.absolutePath} exists=${stateFile.exists()} size=${stateFile.length()}")
+        if (!stateFile.exists()) {
+            return "state load failed: Slot $slot is empty"
+        }
+        return NativeEmulatorBridge.loadState(slot, stateFile.absolutePath)
+    }
+
     fun release() {
         if (released.compareAndSet(false, true)) {
             NativeEmulatorBridge.setInputMask(0)
@@ -240,6 +270,13 @@ class EmulatorRuntime {
         }
         audioTrack = null
         Log.i(TAG, "Audio released.")
+    }
+
+    private fun stateFileForSlot(gameRootPath: String, slot: Int): File? {
+        if (slot !in 1..3) {
+            return null
+        }
+        return File(File(gameRootPath, "states"), "slot_$slot.ss")
     }
 
     private companion object {

@@ -304,6 +304,54 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetSaveStatus(JNIEnv* e
 }
 
 extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSaveState(
+    JNIEnv* env,
+    jobject,
+    jint slot,
+    jstring state_path
+) {
+    if (state_path == nullptr) {
+        return env->NewStringUTF("state save failed: missing state path");
+    }
+
+    const char* chars = env->GetStringUTFChars(state_path, nullptr);
+    std::string path = chars != nullptr ? chars : "";
+    if (chars != nullptr) {
+        env->ReleaseStringUTFChars(state_path, chars);
+    }
+
+    std::lock_guard<std::mutex> lock(gMutex);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "save state request: slot=%d path=%s", slot, path.c_str());
+    const std::string status = gSession.saveState(slot, path);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", status.c_str());
+    return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeLoadState(
+    JNIEnv* env,
+    jobject,
+    jint slot,
+    jstring state_path
+) {
+    if (state_path == nullptr) {
+        return env->NewStringUTF("state load failed: missing state path");
+    }
+
+    const char* chars = env->GetStringUTFChars(state_path, nullptr);
+    std::string path = chars != nullptr ? chars : "";
+    if (chars != nullptr) {
+        env->ReleaseStringUTFChars(state_path, chars);
+    }
+
+    std::lock_guard<std::mutex> lock(gMutex);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "load state request: slot=%d path=%s", slot, path.c_str());
+    const std::string status = gSession.loadState(slot, path);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", status.c_str());
+    return env->NewStringUTF(status.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetAudioStatus(JNIEnv* env, jobject) {
     std::lock_guard<std::mutex> lock(gMutex);
     const std::string status = gSession.audioStatus();

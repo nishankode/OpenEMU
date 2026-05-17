@@ -25,6 +25,8 @@ public:
     int readAudio(std::int16_t* output, int maxSamples);
     void setInputMask(std::uint32_t inputMask);
     void setFastForward(bool enabled);
+    std::string saveState(int slot, const std::string& statePath);
+    std::string loadState(int slot, const std::string& statePath);
     std::string flushBatterySave();
     void pause();
     void resume();

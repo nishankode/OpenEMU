@@ -66,6 +66,28 @@ void EmulatorSession::setFastForward(bool enabled) {
     coreAdapter_.setFastForward(enabled);
 }
 
+std::string EmulatorSession::saveState(int slot, const std::string& statePath) {
+    if (released_) {
+        return "state save failed: emulator runtime released";
+    }
+    const bool wasPaused = paused_;
+    paused_ = true;
+    const std::string result = coreAdapter_.saveStateToFile(slot, statePath);
+    paused_ = wasPaused;
+    return result;
+}
+
+std::string EmulatorSession::loadState(int slot, const std::string& statePath) {
+    if (released_) {
+        return "state load failed: emulator runtime released";
+    }
+    const bool wasPaused = paused_;
+    paused_ = true;
+    const std::string result = coreAdapter_.loadStateFromFile(slot, statePath);
+    paused_ = wasPaused;
+    return result;
+}
+
 std::string EmulatorSession::flushBatterySave() {
     if (released_) {
         return coreAdapter_.saveStatus();

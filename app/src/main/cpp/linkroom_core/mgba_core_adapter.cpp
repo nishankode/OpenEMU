@@ -4,6 +4,7 @@
 #include <mgba/core/core.h>
 #include <mgba/core/input.h>
 #include <mgba/core/interface.h>
+#include <mgba/core/serialize.h>
 #include <mgba/internal/gba/audio.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba-util/vfs.h>
@@ -116,6 +117,17 @@ std::int64_t nowMillis() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()
     ).count();
+}
+
+std::string parentDirectory(const std::string& path) {
+    const size_t separator = path.find_last_of('/');
+    if (separator == std::string::npos) {
+        return {};
+    }
+    if (separator == 0) {
+        return "/";
+    }
+    return path.substr(0, separator);
 }
 }
 
@@ -534,6 +546,76 @@ void MgbaCoreAdapter::setFastForward(bool enabled) {
         enabled ? "enabled" : "disabled",
         enabled ? "true" : "false"
     );
+}
+
+std::string MgbaCoreAdapter::saveStateToFile(int slot, const std::string& statePath) {
+    if (core_ == nullptr || !romLoaded_) {
+        return "state save failed: no active ROM";
+    }
+    if (slot < 1 || slot > 3) {
+        return "state save failed: invalid slot";
+    }
+    if (statePath.empty()) {
+        return "state save failed: empty state path";
+    }
+
+    const std::string directory = parentDirectory(statePath);
+    if (directory.empty() || !ensureDirectory(directory)) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "State save failed: unable to prepare directory for slot %d: %s", slot, directory.c_str());
+        return "state save failed: unable to prepare state directory";
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, kTag, "Saving state: slot=%d path=%s", slot, statePath.c_str());
+    VFile* stateFile = VFileOpen(statePath.c_str(), O_CREAT | O_TRUNC | O_RDWR);
+    if (stateFile == nullptr) {
+        const int error = errno;
+        __android_log_print(ANDROID_LOG_WARN, kTag, "State save open failed: slot=%d path=%s error=%s", slot, statePath.c_str(), std::strerror(error));
+        return std::string("state save failed: unable to open slot file (") + std::strerror(error) + ")";
+    }
+
+    const bool success = mCoreSaveStateNamed(core_, stateFile, SAVESTATE_RTC | SAVESTATE_METADATA);
+    stateFile->close(stateFile);
+    if (!success) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "State save failed: slot=%d path=%s", slot, statePath.c_str());
+        return "state save failed: mGBA could not write state";
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, kTag, "State save succeeded: slot=%d path=%s size=%ld", slot, statePath.c_str(), fileSize(statePath));
+    return "state saved: Slot " + std::to_string(slot);
+}
+
+std::string MgbaCoreAdapter::loadStateFromFile(int slot, const std::string& statePath) {
+    if (core_ == nullptr || !romLoaded_) {
+        return "state load failed: no active ROM";
+    }
+    if (slot < 1 || slot > 3) {
+        return "state load failed: invalid slot";
+    }
+    if (!fileExists(statePath)) {
+        __android_log_print(ANDROID_LOG_INFO, kTag, "State load ignored: empty slot=%d path=%s", slot, statePath.c_str());
+        return "state load failed: Slot " + std::to_string(slot) + " is empty";
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, kTag, "Loading state: slot=%d path=%s size=%ld", slot, statePath.c_str(), fileSize(statePath));
+    VFile* stateFile = VFileOpen(statePath.c_str(), O_RDONLY);
+    if (stateFile == nullptr) {
+        const int error = errno;
+        __android_log_print(ANDROID_LOG_WARN, kTag, "State load open failed: slot=%d path=%s error=%s", slot, statePath.c_str(), std::strerror(error));
+        return std::string("state load failed: unable to open slot file (") + std::strerror(error) + ")";
+    }
+
+    const bool success = mCoreLoadStateNamed(core_, stateFile, SAVESTATE_RTC | SAVESTATE_METADATA);
+    stateFile->close(stateFile);
+    audioReadIndex_ = 0;
+    audioWriteIndex_ = 0;
+    audioBufferedSamples_ = 0;
+    if (!success) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "State load failed: slot=%d path=%s", slot, statePath.c_str());
+        return "state load failed: mGBA could not read state";
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, kTag, "State load succeeded: slot=%d path=%s", slot, statePath.c_str());
+    return "state loaded: Slot " + std::to_string(slot);
 }
 
 std::string MgbaCoreAdapter::flushBatterySave() {

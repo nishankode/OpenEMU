@@ -45,6 +45,12 @@ import com.linkroom.app.feature.library.RomHandle
 import com.linkroom.app.runtime.EmulatorRuntime
 import android.util.Log
 import java.io.File
+import java.text.DateFormat
+import java.util.Date
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +61,7 @@ fun EmulatorScreen(
     val runtime = remember { EmulatorRuntime() }
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var bootStatus by remember(rom?.id) {
         mutableStateOf("loading: waiting for ROM load")
     }
@@ -71,6 +78,27 @@ fun EmulatorScreen(
         mutableStateOf("fast-forward: off")
     }
     var showDebug by remember { mutableStateOf(false) }
+    var selectedStateSlot by remember(rom?.id) { mutableStateOf(1) }
+    var stateStatus by remember(rom?.id) { mutableStateOf("State: choose a slot") }
+    var pendingOverwriteSlot by remember(rom?.id) { mutableStateOf<Int?>(null) }
+    var slotSummaryRefresh by remember(rom?.id) { mutableStateOf(0) }
+
+    fun stateFile(slot: Int): File? {
+        val root = rom?.gameRootPath ?: return null
+        return File(File(root, "states"), "slot_$slot.ss")
+    }
+
+    fun slotSummary(slot: Int): String {
+        slotSummaryRefresh
+        val file = stateFile(slot) ?: return "empty"
+        return if (file.exists()) {
+            val time = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+                .format(Date(file.lastModified()))
+            "saved $time"
+        } else {
+            "empty"
+        }
+    }
 
     DisposableEffect(runtime, rom?.id) {
         bootStatus = "loading: preparing emulator runtime"
@@ -184,6 +212,57 @@ fun EmulatorScreen(
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))
+            SaveStateControls(
+                selectedSlot = selectedStateSlot,
+                slotSummary = ::slotSummary,
+                stateStatus = stateStatus,
+                pendingOverwriteSlot = pendingOverwriteSlot,
+                onSlotSelected = { slot ->
+                    selectedStateSlot = slot
+                    pendingOverwriteSlot = null
+                    stateStatus = "State: Slot $slot selected"
+                },
+                onSave = {
+                    val gameRootPath = rom.gameRootPath
+                    if (gameRootPath == null) {
+                        stateStatus = "State save failed: state directory unavailable"
+                    } else if (stateFile(selectedStateSlot)?.exists() == true && pendingOverwriteSlot != selectedStateSlot) {
+                        pendingOverwriteSlot = selectedStateSlot
+                        stateStatus = "State: Slot $selectedStateSlot already exists"
+                    } else {
+                        val slot = selectedStateSlot
+                        pendingOverwriteSlot = null
+                        stateStatus = "State: saving Slot $slot"
+                        coroutineScope.launch {
+                            val result = withContext(Dispatchers.IO) {
+                                runtime.saveState(slot, gameRootPath)
+                            }
+                            stateStatus = result
+                            slotSummaryRefresh++
+                        }
+                    }
+                },
+                onLoad = {
+                    val gameRootPath = rom.gameRootPath
+                    if (gameRootPath == null) {
+                        stateStatus = "State load failed: state directory unavailable"
+                    } else {
+                        val slot = selectedStateSlot
+                        pendingOverwriteSlot = null
+                        stateStatus = "State: loading Slot $slot"
+                        coroutineScope.launch {
+                            val result = withContext(Dispatchers.IO) {
+                                runtime.loadState(slot, gameRootPath)
+                            }
+                            stateStatus = result
+                            bootStatus = runtime.runtimeStatusMessage
+                            saveStatus = runtime.saveStatusMessage
+                            audioStatus = if (fastForwardEnabled) "audio muted" else runtime.audioStatusMessage
+                        }
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             GbaControlOverlay(runtime = runtime)
             Spacer(modifier = Modifier.height(8.dp))
             TextButton(onClick = { showDebug = !showDebug }) {
@@ -195,7 +274,8 @@ fun EmulatorScreen(
                     bootStatus = bootStatus,
                     saveStatus = saveStatus,
                     audioStatus = audioStatus,
-                    fastForwardStatus = fastForwardStatus
+                    fastForwardStatus = fastForwardStatus,
+                    stateStatus = stateStatus
                 )
             }
         }
@@ -257,7 +337,8 @@ private fun DebugPanel(
     bootStatus: String,
     saveStatus: String,
     audioStatus: String,
-    fastForwardStatus: String
+    fastForwardStatus: String,
+    stateStatus: String
 ) {
     Column(
         modifier = Modifier
@@ -271,6 +352,7 @@ private fun DebugPanel(
         DebugLine("Save", saveStatus)
         DebugLine("Audio", audioStatus)
         DebugLine("Fast-forward", fastForwardStatus)
+        DebugLine("State", stateStatus)
     }
 }
 
@@ -297,6 +379,58 @@ private fun FastForwardControls(
         OutlinedButton(onClick = onToggle) {
             Text(if (enabled) "FF 2x On" else "FF Off")
         }
+    }
+}
+
+@Composable
+private fun SaveStateControls(
+    selectedSlot: Int,
+    slotSummary: (Int) -> String,
+    stateStatus: String,
+    pendingOverwriteSlot: Int?,
+    onSlotSelected: (Int) -> Unit,
+    onSave: () -> Unit,
+    onLoad: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (slot in 1..3) {
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSlotSelected(slot) }
+                ) {
+                    Text(if (selectedSlot == slot) "Slot $slot*" else "Slot $slot")
+                }
+            }
+        }
+        Text(
+            text = "Slot $selectedSlot: ${slotSummary(selectedSlot)}",
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedButton(modifier = Modifier.weight(1f), onClick = onSave) {
+                Text(if (pendingOverwriteSlot == selectedSlot) "Confirm Save" else "Save State")
+            }
+            OutlinedButton(modifier = Modifier.weight(1f), onClick = onLoad) {
+                Text("Load State")
+            }
+        }
+        Text(
+            text = stateStatus,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

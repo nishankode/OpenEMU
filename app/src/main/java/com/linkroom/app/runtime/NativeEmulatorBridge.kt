@@ -130,6 +130,38 @@ object NativeEmulatorBridge {
         }
     }
 
+    fun saveState(slot: Int, statePath: String): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping saveState because native library is unavailable.")
+            return "state save failed: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeSaveState(slot, statePath)
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: saveState", error)
+        }.getOrElse { error ->
+            "state save failed: ${error.javaClass.simpleName}"
+        }
+    }
+
+    fun loadState(slot: Int, statePath: String): String {
+        val failure = loadFailure
+        if (failure != null) {
+            Log.w(TAG, "Skipping loadState because native library is unavailable.")
+            return "state load failed: native library unavailable (${failure.javaClass.simpleName})"
+        }
+
+        return runCatching {
+            nativeLoadState(slot, statePath)
+        }.onFailure { error ->
+            Log.e(TAG, "Native operation failed: loadState", error)
+        }.getOrElse { error ->
+            "state load failed: ${error.javaClass.simpleName}"
+        }
+    }
+
     fun getAudioStatus(): String {
         val failure = loadFailure
         if (failure != null) {
@@ -200,6 +232,8 @@ object NativeEmulatorBridge {
     private external fun nativeRelease()
     private external fun nativeGetRuntimeStatus(): String
     private external fun nativeGetSaveStatus(): String
+    private external fun nativeSaveState(slot: Int, statePath: String): String
+    private external fun nativeLoadState(slot: Int, statePath: String): String
     private external fun nativeGetAudioStatus(): String
     private external fun nativeReadAudio(buffer: ShortArray, maxSamples: Int): Int
     private external fun nativeGetFastForwardStatus(): String
