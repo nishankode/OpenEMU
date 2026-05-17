@@ -1,16 +1,30 @@
 package com.linkroom.app.feature.link
 
+import android.graphics.SurfaceTexture
 import android.os.SystemClock
 import android.util.Log
+import android.view.Surface
+import android.view.TextureView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -34,25 +49,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.linkroom.app.feature.library.RomHandle
 import com.linkroom.app.runtime.NativeEmulatorBridge
 import com.linkroom.app.ui.theme.AppAccent
 import com.linkroom.app.ui.theme.AppBackground
+import com.linkroom.app.ui.theme.AppBorder
 import com.linkroom.app.ui.theme.AppCard
+import com.linkroom.app.ui.theme.AppShapes
 import com.linkroom.app.ui.theme.AppDanger
 import com.linkroom.app.ui.theme.AppSpacing
 import com.linkroom.app.ui.theme.AppSuccess
 import com.linkroom.app.ui.theme.AppSurface
+import com.linkroom.app.ui.theme.AppSurfaceHigh
 import com.linkroom.app.ui.theme.AppTextMuted
 import com.linkroom.app.ui.theme.AppTextPrimary
 import com.linkroom.app.ui.theme.AppTextSecondary
 import com.linkroom.app.ui.theme.AppWarning
 import com.linkroom.app.ui.theme.StatusPill
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -67,6 +92,7 @@ fun LocalLinkDebugScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val playableRoms = remember(importedRoms) {
         importedRoms.filter { rom ->
@@ -114,6 +140,30 @@ fun LocalLinkDebugScreen(
         ((clockTick - startedAtMillis).coerceAtLeast(0L) / 1000L)
     } else {
         0L
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+                    Log.i(TAG, "Local link debug paused; player 1 input cleared")
+                }
+                Lifecycle.Event.ON_DESTROY -> {
+                    NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+                    NativeEmulatorBridge.detachLocalLinkSurface()
+                    NativeEmulatorBridge.stopLocalLinkTest()
+                }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
+            NativeEmulatorBridge.detachLocalLinkSurface()
+            NativeEmulatorBridge.stopLocalLinkTest()
+        }
     }
 
     Scaffold(
@@ -168,9 +218,28 @@ fun LocalLinkDebugScreen(
                         )
                     }
                     Text(
-                        text = "Developer-only local link test. Slot 1 and Slot 2 run as separate mGBA cores with separate save roots. Rendering stays headless in this harness.",
+                        text = "Developer-only local link test. Slot 1 renders here while Slot 2 runs headless with a separate save root.",
                         style = MaterialTheme.typography.bodySmall,
                         color = AppTextSecondary
+                    )
+                }
+            }
+
+            AppCard(contentPadding = PaddingValues(10.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
+                        .background(AppSurface, AppShapes.large)
+                        .border(1.dp, AppBorder, AppShapes.large)
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LocalLinkSlot1Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(240f / 160f)
+                            .background(Color.Black, RoundedCornerShape(10.dp))
                     )
                 }
             }
@@ -233,6 +302,7 @@ fun LocalLinkDebugScreen(
                                 onClick = {
                                     Log.i(TAG, "Stopping local link debug")
                                     NativeEmulatorBridge.stopLocalLinkTest()
+                                    NativeEmulatorBridge.setLocalLinkInputMask(1, 0)
                                     status = NativeEmulatorBridge.getLocalLinkStatus()
                                     startedAtMillis = 0L
                                 },
@@ -242,6 +312,23 @@ fun LocalLinkDebugScreen(
                             }
                         }
                     }
+                }
+            }
+
+            AppCard(contentPadding = PaddingValues(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                    Text(
+                        text = "Player 1 controls",
+                        color = AppTextPrimary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    LocalLinkControlOverlay(enabled = isRunning)
+                    Text(
+                        text = "Controls route to Slot 1 only. Slot 2 remains idle/headless in Phase 1D.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppTextSecondary
+                    )
                 }
             }
 
@@ -256,6 +343,7 @@ fun LocalLinkDebugScreen(
                     DetailRow("Runtime", formatDuration(runtimeSeconds))
                     DetailRow("Frame count", extractStatusValue(status, "slot1Frames") ?: "not available")
                     DetailRow("Slot 2 frames", extractStatusValue(status, "slot2Frames") ?: "not available")
+                    DetailRow("Rendered frames", extractStatusValue(status, "slot1Rendered") ?: "not available")
                     DetailRow("SIO attached", extractStatusValue(status, "attached") ?: "not available")
                     DetailRow("Transfer phase", extractStatusValue(status, "transferPhase") ?: "not available")
                     DetailRow("Scheduler ticks", extractStatusValue(status, "ticks") ?: "not available")
@@ -290,6 +378,166 @@ fun LocalLinkDebugScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LocalLinkSlot1Surface(modifier: Modifier = Modifier) {
+    val textureViewRef = remember { AtomicReference<TextureView?>(null) }
+    val attachedSurfaceRef = remember { AtomicReference<Surface?>(null) }
+    val listener = remember {
+        object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
+                Log.i(TAG, "Local link Slot 1 surface available: $width x $height")
+                val surface = Surface(surfaceTexture)
+                attachedSurfaceRef.getAndSet(surface)?.release()
+                NativeEmulatorBridge.attachLocalLinkSurface(surface)
+                NativeEmulatorBridge.resizeLocalLinkSurface(width, height)
+            }
+
+            override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
+                Log.i(TAG, "Local link Slot 1 surface changed: $width x $height")
+                NativeEmulatorBridge.resizeLocalLinkSurface(width, height)
+            }
+
+            override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
+                Log.i(TAG, "Local link Slot 1 surface destroyed")
+                NativeEmulatorBridge.detachLocalLinkSurface()
+                attachedSurfaceRef.getAndSet(null)?.release()
+                return true
+            }
+
+            override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = Unit
+        }
+    }
+
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+            TextureView(context).apply {
+                surfaceTextureListener = listener
+                textureViewRef.set(this)
+            }
+        }
+    )
+
+    DisposableEffect(listener) {
+        onDispose {
+            textureViewRef.getAndSet(null)?.surfaceTextureListener = null
+            NativeEmulatorBridge.detachLocalLinkSurface()
+            attachedSurfaceRef.getAndSet(null)?.release()
+        }
+    }
+}
+
+@Composable
+private fun LocalLinkControlOverlay(enabled: Boolean) {
+    var pressedButtons by remember { mutableStateOf<Set<Int>>(emptySet()) }
+
+    fun setPressed(bit: Int, pressed: Boolean) {
+        val updatedButtons = if (pressed) {
+            pressedButtons + bit
+        } else {
+            pressedButtons - bit
+        }
+        pressedButtons = updatedButtons
+        val inputMask = if (enabled) updatedButtons.fold(0) { mask, button -> mask or button } else 0
+        NativeEmulatorBridge.setLocalLinkInputMask(1, inputMask)
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LocalLinkDPad(enabled = enabled, onPressedChange = ::setPressed)
+            LocalLinkShoulderAndFaceButtons(enabled = enabled, onPressedChange = ::setPressed)
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LocalLinkControlButton("Select", INPUT_SELECT, enabled, ::setPressed, wide = true)
+            Spacer(modifier = Modifier.width(16.dp))
+            LocalLinkControlButton("Start", INPUT_START, enabled, ::setPressed, wide = true)
+        }
+    }
+}
+
+@Composable
+private fun LocalLinkDPad(enabled: Boolean, onPressedChange: (Int, Boolean) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        LocalLinkControlButton("Up", INPUT_UP, enabled, onPressedChange)
+        Row {
+            LocalLinkControlButton("Left", INPUT_LEFT, enabled, onPressedChange)
+            Spacer(modifier = Modifier.width(36.dp))
+            LocalLinkControlButton("Right", INPUT_RIGHT, enabled, onPressedChange)
+        }
+        LocalLinkControlButton("Down", INPUT_DOWN, enabled, onPressedChange)
+    }
+}
+
+@Composable
+private fun LocalLinkShoulderAndFaceButtons(enabled: Boolean, onPressedChange: (Int, Boolean) -> Unit) {
+    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            LocalLinkControlButton("L", INPUT_L, enabled, onPressedChange)
+            LocalLinkControlButton("R", INPUT_R, enabled, onPressedChange)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            LocalLinkControlButton("B", INPUT_B, enabled, onPressedChange)
+            LocalLinkControlButton("A", INPUT_A, enabled, onPressedChange)
+        }
+    }
+}
+
+@Composable
+private fun LocalLinkControlButton(
+    label: String,
+    bit: Int,
+    enabled: Boolean,
+    onPressedChange: (Int, Boolean) -> Unit,
+    wide: Boolean = false
+) {
+    val isFaceButton = label == "A" || label == "B"
+    Box(
+        modifier = Modifier
+            .then(if (wide) Modifier.width(84.dp).height(40.dp) else Modifier.size(48.dp))
+            .background(
+                color = when {
+                    !enabled -> AppSurfaceHigh.copy(alpha = 0.46f)
+                    isFaceButton -> AppAccent.copy(alpha = 0.24f)
+                    else -> AppSurfaceHigh
+                },
+                shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
+            )
+            .border(
+                width = 1.dp,
+                color = if (isFaceButton) AppAccent.copy(alpha = 0.68f) else AppBorder,
+                shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
+            )
+            .pointerInput(bit, enabled) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    if (enabled) {
+                        onPressedChange(bit, true)
+                    }
+                    try {
+                        var stillPressed: Boolean
+                        do {
+                            val event = awaitPointerEvent()
+                            stillPressed = event.changes.any { it.id == down.id && it.pressed }
+                        } while (stillPressed)
+                    } finally {
+                        onPressedChange(bit, false)
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge, color = AppTextPrimary)
     }
 }
 
@@ -388,3 +636,14 @@ private fun formatDuration(seconds: Long): String {
     val remainder = seconds % 60
     return "${minutes}m ${remainder}s"
 }
+
+private const val INPUT_A = 1 shl 0
+private const val INPUT_B = 1 shl 1
+private const val INPUT_SELECT = 1 shl 2
+private const val INPUT_START = 1 shl 3
+private const val INPUT_RIGHT = 1 shl 4
+private const val INPUT_LEFT = 1 shl 5
+private const val INPUT_UP = 1 shl 6
+private const val INPUT_DOWN = 1 shl 7
+private const val INPUT_R = 1 shl 8
+private const val INPUT_L = 1 shl 9

@@ -9,6 +9,8 @@
 #include <mgba-util/vfs.h>
 
 #include <android/log.h>
+#include <android/native_window.h>
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -204,6 +206,65 @@ void LinkedEmulatorSlot::runFrame() {
     core_->setKeys(core_, inputMask_);
     core_->runFrame(core_);
     ++framesRun_;
+}
+
+bool LinkedEmulatorSlot::renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight) {
+    if (window == nullptr || windowWidth <= 0 || windowHeight <= 0 || videoBuffer_.empty()) {
+        return false;
+    }
+
+    if (ANativeWindow_setBuffersGeometry(window, windowWidth, windowHeight, WINDOW_FORMAT_RGBA_8888) != 0) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "slot render failed: unable to set window geometry");
+        return false;
+    }
+
+    ANativeWindow_Buffer buffer {};
+    if (ANativeWindow_lock(window, &buffer, nullptr) != 0) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "slot render failed: unable to lock window");
+        return false;
+    }
+
+    auto* destination = static_cast<std::uint32_t*>(buffer.bits);
+    if (destination == nullptr || buffer.stride <= 0 || buffer.width <= 0 || buffer.height <= 0) {
+        ANativeWindow_unlockAndPost(window);
+        return false;
+    }
+
+    const int bufferWidth = buffer.width;
+    const int bufferHeight = buffer.height;
+    const int destinationStride = buffer.stride;
+    const float sourceAspect = static_cast<float>(kGbaWidth) / static_cast<float>(kGbaHeight);
+    const float bufferAspect = static_cast<float>(bufferWidth) / static_cast<float>(bufferHeight);
+
+    int drawWidth = bufferWidth;
+    int drawHeight = bufferHeight;
+    if (bufferAspect > sourceAspect) {
+        drawWidth = static_cast<int>(bufferHeight * sourceAspect);
+    } else {
+        drawHeight = static_cast<int>(bufferWidth / sourceAspect);
+    }
+    drawWidth = std::max(1, std::min(drawWidth, bufferWidth));
+    drawHeight = std::max(1, std::min(drawHeight, bufferHeight));
+    const int offsetX = (bufferWidth - drawWidth) / 2;
+    const int offsetY = (bufferHeight - drawHeight) / 2;
+
+    for (int y = 0; y < bufferHeight; ++y) {
+        std::uint32_t* row = destination + y * destinationStride;
+        std::fill(row, row + bufferWidth, 0xFF000000u);
+    }
+
+    for (int y = 0; y < drawHeight; ++y) {
+        const int sourceY = (y * kGbaHeight) / drawHeight;
+        std::uint32_t* destinationRow = destination + (offsetY + y) * destinationStride + offsetX;
+        const std::uint32_t* sourceRow = videoBuffer_.data() + sourceY * kVideoStride;
+        for (int x = 0; x < drawWidth; ++x) {
+            const int sourceX = (x * kGbaWidth) / drawWidth;
+            destinationRow[x] = sourceRow[sourceX] | 0xFF000000u;
+        }
+    }
+
+    ANativeWindow_unlockAndPost(window);
+    return true;
 }
 
 void LinkedEmulatorSlot::setInputMask(std::uint32_t inputMask) {

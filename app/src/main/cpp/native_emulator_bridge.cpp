@@ -474,3 +474,49 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeGetLocalLinkStatus(JNIE
     const std::string status = gLocalLinkSession.status();
     return env->NewStringUTF(status.c_str());
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeAttachLocalLinkSurface(
+    JNIEnv* env,
+    jobject,
+    jobject surface
+) {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "hidden local link slot 1 surface attach requested");
+    if (surface == nullptr) {
+        gLocalLinkSession.attachSlot1Surface(nullptr);
+        return;
+    }
+
+    ANativeWindow* window = ANativeWindow_fromSurface(env, surface);
+    if (window == nullptr) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "hidden local link surface attach failed: no ANativeWindow");
+        return;
+    }
+    gLocalLinkSession.attachSlot1Surface(window);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeResizeLocalLinkSurface(
+    JNIEnv*,
+    jobject,
+    jint width,
+    jint height
+) {
+    gLocalLinkSession.resizeSlot1Surface(width, height);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeDetachLocalLinkSurface(JNIEnv*, jobject) {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "hidden local link slot 1 surface detach requested");
+    gLocalLinkSession.detachSlot1Surface();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeSetLocalLinkInputMask(
+    JNIEnv*,
+    jobject,
+    jint slot,
+    jint input_mask
+) {
+    gLocalLinkSession.setInputMask(static_cast<int>(slot), static_cast<std::uint32_t>(input_mask));
+}

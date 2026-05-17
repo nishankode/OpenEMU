@@ -8,6 +8,7 @@ struct mCore;
 struct GBA;
 struct GBASIOLockstep;
 struct GBASIOLockstepNode;
+struct ANativeWindow;
 
 namespace linkroom {
 
@@ -29,6 +30,7 @@ public:
     );
     void reset();
     void runFrame();
+    bool renderFrameToWindow(ANativeWindow* window, int windowWidth, int windowHeight);
     void setInputMask(std::uint32_t inputMask);
     void release();
 

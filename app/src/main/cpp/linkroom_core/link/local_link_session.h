@@ -11,6 +11,8 @@
 #include <mutex>
 #include <string>
 
+struct ANativeWindow;
+
 namespace linkroom {
 
 class LocalLinkSession {
@@ -25,6 +27,9 @@ public:
     void stop();
     std::string status() const;
     void setInputMask(int slot, std::uint32_t inputMask);
+    void attachSlot1Surface(ANativeWindow* window);
+    void resizeSlot1Surface(int width, int height);
+    void detachSlot1Surface();
 
 private:
     struct LockstepContext {
@@ -36,6 +41,7 @@ private:
     void releaseLockstep();
     void schedulerTick();
     std::string statusLocked() const;
+    void releaseSlot1WindowLocked();
 
     static void lockCallback(mLockstep* lockstep);
     static void unlockCallback(mLockstep* lockstep);
@@ -56,6 +62,10 @@ private:
     LockstepContext lockstepContext_;
     std::string status_ = "local link: idle";
     std::string baseTestDir_;
+    ANativeWindow* slot1Window_ = nullptr;
+    int slot1WindowWidth_ = 0;
+    int slot1WindowHeight_ = 0;
+    std::uint64_t slot1RenderedFrames_ = 0;
     bool lockstepReady_ = false;
     bool running_ = false;
 };

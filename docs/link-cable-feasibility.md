@@ -273,3 +273,52 @@ Recommended Phase 1D:
 - Add transfer-attempt counters near the mGBA lockstep/SIO callbacks.
 - Add optional Player 1 input routing to the hidden link session.
 - Run a known link-capable user-provided ROM pair for 30+ seconds and verify whether SIO transfer activity appears.
+
+## Phase 1D Findings
+
+Phase 1D extends the hidden `Local Link Debug` screen so Slot 1 is visible and controllable while Slot 2 remains headless.
+
+Native additions:
+
+- `LinkedEmulatorSlot::renderFrameToWindow(...)` renders the slot's existing 240x160 software video buffer into an `ANativeWindow`.
+- `LocalLinkSession` owns a separate Slot 1 `ANativeWindow` reference, dimensions, and rendered-frame counter.
+- `LocalLinkSession::attachSlot1Surface(...)`, `resizeSlot1Surface(...)`, and `detachSlot1Surface(...)` manage the hidden debug surface independently from the production single-player surface.
+- The local link scheduler still runs both cores on one native scheduler thread. After each bounded Slot 1/Slot 2 frame step, it renders the latest Slot 1 frame if a debug surface is attached.
+- `LocalLinkSession::setInputMask(1, ...)` now has Kotlin/JNI wiring from the debug screen's Player 1 controls.
+
+Kotlin/JNI additions:
+
+- `NativeEmulatorBridge.attachLocalLinkSurface(surface)`
+- `NativeEmulatorBridge.resizeLocalLinkSurface(width, height)`
+- `NativeEmulatorBridge.detachLocalLinkSurface()`
+- `NativeEmulatorBridge.setLocalLinkInputMask(slot, inputMask)`
+
+Debug-screen behavior:
+
+- Slot 1 renders in the hidden Local Link Debug screen.
+- Slot 2 runs headless.
+- Player 1 controls route to Slot 1 only:
+  - D-pad
+  - A/B
+  - L/R
+  - Start/Select
+- Input is cleared on app pause, stop, and screen disposal.
+- The screen still shows scheduler ticks, Slot 1/Slot 2 frame counts, rendered Slot 1 frame count, lockstep attachment count, and transfer phase.
+
+Single-player emulator behavior remains separate. The production `EmulatorSession`, global single-player surface, audio path, battery saves, save states, and fast-forward controls were not reused for the local link debug renderer.
+
+Current limitations:
+
+- Slot 2 has no video and no controls.
+- Audio is still disabled for local-link debug sessions.
+- SIO transfer count is not yet instrumented beyond `transferPhase`.
+- Real game-level link/trade behavior is still not proven.
+
+Phase 1D status: partially working until device testing confirms Slot 1 video and controls on the hidden screen. Architecturally, Slot 1 rendering/input is now wired without exposing public multiplayer UI.
+
+Recommended Phase 1E:
+
+- Add SIO mode-change and transfer-attempt counters around the lockstep/SIO driver path.
+- Add a link activity panel that distinguishes idle, mode-change, transfer-start, transfer-complete, and stall states.
+- Test two user-provided link-capable ROM instances for actual in-game cable handshake behavior.
+- Add optional scripted/secondary input for Slot 2 only if needed for handshake testing.

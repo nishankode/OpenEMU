@@ -1,6 +1,7 @@
 #include "local_link_session.h"
 
 #include <android/log.h>
+#include <android/native_window.h>
 #include <algorithm>
 #include <cerrno>
 #include <sstream>
@@ -53,6 +54,8 @@ LocalLinkSession::LocalLinkSession() = default;
 
 LocalLinkSession::~LocalLinkSession() {
     stop();
+    std::lock_guard<std::mutex> lock(mutex_);
+    releaseSlot1WindowLocked();
 }
 
 std::string LocalLinkSession::start(
@@ -132,6 +135,42 @@ void LocalLinkSession::setInputMask(int slot, std::uint32_t inputMask) {
     }
 }
 
+void LocalLinkSession::attachSlot1Surface(ANativeWindow* window) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    releaseSlot1WindowLocked();
+    slot1Window_ = window;
+    if (slot1Window_ != nullptr) {
+        slot1WindowWidth_ = ANativeWindow_getWidth(slot1Window_);
+        slot1WindowHeight_ = ANativeWindow_getHeight(slot1Window_);
+        __android_log_print(
+            ANDROID_LOG_INFO,
+            kTag,
+            "slot 1 surface attached: %d x %d",
+            slot1WindowWidth_,
+            slot1WindowHeight_
+        );
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "slot 1 surface attach ignored: null window");
+    }
+}
+
+void LocalLinkSession::resizeSlot1Surface(int width, int height) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (width <= 0 || height <= 0) {
+        __android_log_print(ANDROID_LOG_WARN, kTag, "slot 1 resize ignored: %d x %d", width, height);
+        return;
+    }
+    slot1WindowWidth_ = width;
+    slot1WindowHeight_ = height;
+    __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 surface resized: %d x %d", width, height);
+}
+
+void LocalLinkSession::detachSlot1Surface() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    releaseSlot1WindowLocked();
+    __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 surface detached");
+}
+
 bool LocalLinkSession::prepareLockstep() {
     mLockstepInit(&lockstep_.d);
     lockstep_.d.context = &lockstepContext_;
@@ -178,6 +217,11 @@ void LocalLinkSession::schedulerTick() {
     }
     slot1_.runFrame();
     slot2_.runFrame();
+    if (slot1Window_ != nullptr && slot1WindowWidth_ > 0 && slot1WindowHeight_ > 0) {
+        if (slot1_.renderFrameToWindow(slot1Window_, slot1WindowWidth_, slot1WindowHeight_)) {
+            ++slot1RenderedFrames_;
+        }
+    }
     if ((slot1_.framesRun() % 600) == 0) {
         __android_log_print(
             ANDROID_LOG_INFO,
@@ -198,9 +242,19 @@ std::string LocalLinkSession::statusLocked() const {
         << " ticks=" << scheduler_.ticks()
         << " slot1Frames=" << slot1_.framesRun()
         << " slot2Frames=" << slot2_.framesRun()
+        << " slot1Rendered=" << slot1RenderedFrames_
         << " attached=" << lockstep_.d.attached
         << " transferPhase=" << static_cast<int>(lockstep_.d.transferActive);
     return out.str();
+}
+
+void LocalLinkSession::releaseSlot1WindowLocked() {
+    if (slot1Window_ != nullptr) {
+        ANativeWindow_release(slot1Window_);
+        slot1Window_ = nullptr;
+    }
+    slot1WindowWidth_ = 0;
+    slot1WindowHeight_ = 0;
 }
 
 void LocalLinkSession::lockCallback(mLockstep* lockstep) {

@@ -264,6 +264,30 @@ object NativeEmulatorBridge {
         }
     }
 
+    fun attachLocalLinkSurface(surface: Surface) = callNative("attachLocalLinkSurface") {
+        if (surface.isValid) {
+            nativeAttachLocalLinkSurface(surface)
+        } else {
+            Log.w(TAG, "Ignoring local link attach for invalid surface.")
+        }
+    }
+
+    fun resizeLocalLinkSurface(width: Int, height: Int) = callNative("resizeLocalLinkSurface") {
+        if (width > 0 && height > 0) {
+            nativeResizeLocalLinkSurface(width, height)
+        } else {
+            Log.w(TAG, "Ignoring local link resize with invalid bounds: $width x $height")
+        }
+    }
+
+    fun detachLocalLinkSurface() = callNative("detachLocalLinkSurface") {
+        nativeDetachLocalLinkSurface()
+    }
+
+    fun setLocalLinkInputMask(slot: Int, inputMask: Int) = callNative("setLocalLinkInputMask") {
+        nativeSetLocalLinkInputMask(slot, inputMask)
+    }
+
     private inline fun callNative(operation: String, block: () -> Unit): Boolean {
         val failure = loadFailure
         if (failure != null) {
@@ -303,4 +327,8 @@ object NativeEmulatorBridge {
     ): String
     private external fun nativeStopLocalLinkTest()
     private external fun nativeGetLocalLinkStatus(): String
+    private external fun nativeAttachLocalLinkSurface(surface: Surface)
+    private external fun nativeResizeLocalLinkSurface(width: Int, height: Int)
+    private external fun nativeDetachLocalLinkSurface()
+    private external fun nativeSetLocalLinkInputMask(slot: Int, inputMask: Int)
 }
