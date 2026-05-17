@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -95,7 +97,7 @@ fun EmulatorScreen(
     var showDebug by remember { mutableStateOf(false) }
     var selectedStateSlot by remember(rom?.id) { mutableStateOf(1) }
     var stateStatus by remember(rom?.id) { mutableStateOf("State: choose a slot") }
-    var pendingOverwriteSlot by remember(rom?.id) { mutableStateOf<Int?>(null) }
+    var overwriteDialogSlot by remember(rom?.id) { mutableStateOf<Int?>(null) }
     var slotSummaryRefresh by remember(rom?.id) { mutableStateOf(0) }
 
     fun stateFile(slot: Int): File? {
@@ -112,6 +114,17 @@ fun EmulatorScreen(
             "saved $time"
         } else {
             "empty"
+        }
+    }
+
+    fun saveStateToSlot(slot: Int, gameRootPath: String) {
+        stateStatus = "State: saving Slot $slot"
+        coroutineScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runtime.saveState(slot, gameRootPath)
+            }
+            stateStatus = result
+            slotSummaryRefresh++
         }
     }
 
@@ -218,7 +231,7 @@ fun EmulatorScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(238.dp)
+                    .height(190.dp)
                     .background(AppSurface, AppShapes.large)
                     .border(1.dp, AppBorder, AppShapes.large)
                     .padding(8.dp),
@@ -251,30 +264,18 @@ fun EmulatorScreen(
                     selectedSlot = selectedStateSlot,
                     slotSummary = ::slotSummary,
                     stateStatus = stateStatus,
-                    pendingOverwriteSlot = pendingOverwriteSlot,
                     onSlotSelected = { slot ->
                         selectedStateSlot = slot
-                        pendingOverwriteSlot = null
                         stateStatus = "State: Slot $slot selected"
                     },
                     onSave = {
                         val gameRootPath = rom.gameRootPath
                         if (gameRootPath == null) {
                             stateStatus = "State save failed: state directory unavailable"
-                        } else if (stateFile(selectedStateSlot)?.exists() == true && pendingOverwriteSlot != selectedStateSlot) {
-                            pendingOverwriteSlot = selectedStateSlot
-                            stateStatus = "State: Slot $selectedStateSlot already exists"
+                        } else if (stateFile(selectedStateSlot)?.exists() == true) {
+                            overwriteDialogSlot = selectedStateSlot
                         } else {
-                            val slot = selectedStateSlot
-                            pendingOverwriteSlot = null
-                            stateStatus = "State: saving Slot $slot"
-                            coroutineScope.launch {
-                                val result = withContext(Dispatchers.IO) {
-                                    runtime.saveState(slot, gameRootPath)
-                                }
-                                stateStatus = result
-                                slotSummaryRefresh++
-                            }
+                            saveStateToSlot(selectedStateSlot, gameRootPath)
                         }
                     },
                     onLoad = {
@@ -283,7 +284,6 @@ fun EmulatorScreen(
                             stateStatus = "State load failed: state directory unavailable"
                         } else {
                             val slot = selectedStateSlot
-                            pendingOverwriteSlot = null
                             stateStatus = "State: loading Slot $slot"
                             coroutineScope.launch {
                                 val result = withContext(Dispatchers.IO) {
@@ -313,6 +313,34 @@ fun EmulatorScreen(
                 }
             }
         }
+    }
+
+    overwriteDialogSlot?.let { slot ->
+        AlertDialog(
+            onDismissRequest = { overwriteDialogSlot = null },
+            title = { Text("Overwrite save state?") },
+            text = { Text("Slot $slot already has a save. Replace it with the current game state?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val gameRootPath = rom?.gameRootPath
+                        overwriteDialogSlot = null
+                        if (gameRootPath == null) {
+                            stateStatus = "State save failed: state directory unavailable"
+                        } else {
+                            saveStateToSlot(slot, gameRootPath)
+                        }
+                    }
+                ) {
+                    Text("Overwrite")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { overwriteDialogSlot = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -403,16 +431,15 @@ private fun FastForwardControls(
                 color = AppTextPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
-            StatusPill(text = if (enabled) "FF 2x" else "Off", color = AppAccent, filled = enabled)
-        }
-    }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedButton(onClick = onToggle) {
-            Text(if (enabled) "Disable 2x" else "Enable 2x")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatusPill(text = if (enabled) "FF 2x" else "Off", color = AppAccent, filled = enabled)
+                OutlinedButton(onClick = onToggle) {
+                    Text(if (enabled) "Off" else "2x", maxLines = 1)
+                }
+            }
         }
     }
 }
@@ -422,13 +449,12 @@ private fun SaveStateControls(
     selectedSlot: Int,
     slotSummary: (Int) -> String,
     stateStatus: String,
-    pendingOverwriteSlot: Int?,
     onSlotSelected: (Int) -> Unit,
     onSave: () -> Unit,
     onLoad: () -> Unit
 ) {
     AppCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp)) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -456,10 +482,10 @@ private fun SaveStateControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedButton(modifier = Modifier.weight(1f), onClick = onSave) {
-                Text(if (pendingOverwriteSlot == selectedSlot) "Confirm Save" else "Save State")
+                Text("Save State", maxLines = 1)
             }
             OutlinedButton(modifier = Modifier.weight(1f), onClick = onLoad) {
-                Text("Load State")
+                Text("Load State", maxLines = 1)
             }
         }
         Text(
@@ -514,7 +540,13 @@ private fun GbaControlOverlay(runtime: EmulatorRuntime) {
         runtime.setInputMask(updatedButtons.fold(0) { mask, button -> mask or button })
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    AppCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = "Controls",
+            color = AppTextPrimary,
+            style = MaterialTheme.typography.labelLarge
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -533,6 +565,7 @@ private fun GbaControlOverlay(runtime: EmulatorRuntime) {
             ControlButton(label = "Start", bit = INPUT_START, onPressedChange = ::setPressed, wide = true)
         }
     }
+    }
 }
 
 @Composable
@@ -541,7 +574,7 @@ private fun DPad(onPressedChange: (Int, Boolean) -> Unit) {
         ControlButton(label = "Up", bit = INPUT_UP, onPressedChange = onPressedChange)
         Row {
             ControlButton(label = "Left", bit = INPUT_LEFT, onPressedChange = onPressedChange)
-            Spacer(modifier = Modifier.width(48.dp))
+            Spacer(modifier = Modifier.width(36.dp))
             ControlButton(label = "Right", bit = INPUT_RIGHT, onPressedChange = onPressedChange)
         }
         ControlButton(label = "Down", bit = INPUT_DOWN, onPressedChange = onPressedChange)
@@ -571,7 +604,7 @@ private fun ControlButton(
 ) {
     Box(
         modifier = Modifier
-            .then(if (wide) Modifier.width(84.dp).height(42.dp) else Modifier.size(52.dp))
+            .then(if (wide) Modifier.width(84.dp).height(40.dp) else Modifier.size(48.dp))
             .background(
                 color = if (label == "A" || label == "B") AppAccent.copy(alpha = 0.24f) else AppSurfaceHigh,
                 shape = if (wide) RoundedCornerShape(24.dp) else CircleShape
