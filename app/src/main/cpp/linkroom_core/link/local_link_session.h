@@ -18,7 +18,7 @@ namespace linkroom {
 
 enum class LocalLinkSchedulerMode : int {
     Stable = 0,
-    ExperimentalLockstep = 1
+    BalancedLockstep = 1
 };
 
 class LocalLinkSession {
@@ -56,7 +56,7 @@ private:
     void releaseLockstep();
     void schedulerTick();
     void runStableSchedulerTickLocked();
-    int runExperimentalSchedulerTickLocked();
+    int runBalancedSchedulerTickLocked();
     std::string statusLocked() const;
     void releaseSlot1WindowLocked();
     void resetDiagnosticsLocked();
@@ -91,6 +91,7 @@ private:
     std::uint64_t transferAttemptCount_ = 0;
     std::uint64_t transferCompleteCount_ = 0;
     std::uint64_t sliceLimitHitCount_ = 0;
+    std::uint64_t balancedFallbackCount_ = 0;
     std::uint64_t lastSignalSample_ = 0;
     std::uint64_t lastWaitSample_ = 0;
     std::uint64_t lastTickSample_ = 0;
@@ -98,6 +99,7 @@ private:
     std::uint64_t waitRatePerSecond_ = 0;
     std::uint64_t schedulerTickRatePerSecond_ = 0;
     int lastSlicesUsed_ = 0;
+    int prioritizedSlot_ = 0;
     std::int64_t startMonotonicMs_ = 0;
     std::int64_t lastTransferActivityMs_ = 0;
     std::int64_t lastModeChangeMs_ = 0;

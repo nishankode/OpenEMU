@@ -500,6 +500,8 @@ Manual testing showed that the Phase 1H smaller-slice scheduler made Slot 2 extr
 The hidden Local Link Debug screen now supports two scheduler modes:
 
 - `Stable`: default mode. Uses the previous full-frame Slot 1 then Slot 2 scheduler behavior that kept both slots playable during manual control.
-- `Experimental lockstep`: opt-in mode. Uses the Phase 1H smaller alternating `runLoop()` slice scheduler for deeper timing experiments. It may be slower, but remains available for investigating lockstep behavior.
+- `Balanced lockstep`: opt-in mode. Replaces the unusably slow Phase 1H experimental scheduler. It tries short alternating `runLoop()` slices, then immediately catches up whichever slot did not reach a frame, and prioritizes the slot that is behind if a frame delta appears.
 
-The mode can only be changed before starting a link test. The Link Activity panel keeps the Phase 1H instrumentation in both modes, including SIO modes, transfer counts, frame counts, rendered counts, frame delta, lockstep signal/wait rates, scheduler tick rate, warnings, and debug snapshot copy.
+The mode can only be changed before starting a link test. The Link Activity panel keeps the Phase 1H instrumentation in both modes, including SIO modes, transfer counts, frame counts, rendered counts, frame delta, lockstep signal/wait rates, scheduler tick rate, prioritized slot, balanced fallback count, warnings, and debug snapshot copy.
+
+Balanced lockstep is the recommended mode for the next in-game cable-room test. Stable remains the known-playable baseline.

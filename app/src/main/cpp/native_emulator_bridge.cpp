@@ -462,7 +462,7 @@ Java_com_linkroom_app_runtime_NativeEmulatorBridge_nativeStartLocalLinkTest(
         scheduler_mode
     );
     const auto mode = scheduler_mode == 1
-        ? linkroom::LocalLinkSchedulerMode::ExperimentalLockstep
+        ? linkroom::LocalLinkSchedulerMode::BalancedLockstep
         : linkroom::LocalLinkSchedulerMode::Stable;
     const std::string status = gLocalLinkSession.start(primary, secondary, base, mode);
     return env->NewStringUTF(status.c_str());

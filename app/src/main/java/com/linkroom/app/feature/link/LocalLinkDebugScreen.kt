@@ -569,6 +569,8 @@ fun LocalLinkDebugScreen(
                     DetailRow("Wait rate", "${extractStatusValue(status, "waitRate") ?: "0"}/s")
                     DetailRow("Slices last tick", extractStatusValue(status, "slicesLastTick") ?: "not available")
                     DetailRow("Slice cap hits", extractStatusValue(status, "sliceLimitHits") ?: "0")
+                    DetailRow("Balanced fallbacks", extractStatusValue(status, "balancedFallbacks") ?: "0")
+                    DetailRow("Prioritized slot", prioritizedSlotLabel(extractStatusValue(status, "prioritizedSlot")))
                     DetailRow("Link warning", extractStatusValue(status, "linkWarning") ?: "none")
                     Text(
                         text = status,
@@ -713,14 +715,14 @@ private fun SchedulerModeSelector(
                 enabled = enabled,
                 onClick = { onSelected(1) }
             ) {
-                Text(if (selectedMode == 1) "Experimental*" else "Experimental")
+                Text(if (selectedMode == 1) "Balanced*" else "Balanced")
             }
         }
         Text(
             text = if (selectedMode == 0) {
                 "Stable uses the previous playable two-core frame scheduler."
             } else {
-                "Experimental uses smaller lockstep slices for timing diagnostics and may run slower."
+                "Balanced uses short alternating slices, then catches up the behind slot to keep both playable."
             },
             style = MaterialTheme.typography.bodySmall,
             color = AppTextSecondary
@@ -997,9 +999,18 @@ private fun buildDebugSnapshot(
 }
 
 private fun schedulerModeLabel(statusValue: String?, selectedMode: Int): String {
-    return when (statusValue ?: if (selectedMode == 1) "experimental_lockstep" else "stable") {
+    return when (statusValue ?: if (selectedMode == 1) "balanced_lockstep" else "stable") {
+        "balanced_lockstep" -> "Balanced lockstep"
         "experimental_lockstep" -> "Experimental lockstep"
         else -> "Stable"
+    }
+}
+
+private fun prioritizedSlotLabel(value: String?): String {
+    return when (value) {
+        "1" -> "Slot 1"
+        "2" -> "Slot 2"
+        else -> "none"
     }
 }
 

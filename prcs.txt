@@ -1,3 +1,5 @@
 adb logcat -s NativeEmulatorBridge EmulatorRuntime LinkRoomNative
 
 .\gradlew :app:installDebug
+adb shell am force-stop com.linkroom.app
+adb shell am start -n com.linkroom.app/.MainActivity

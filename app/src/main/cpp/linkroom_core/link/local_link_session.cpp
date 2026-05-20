@@ -13,6 +13,7 @@ namespace linkroom {
 namespace {
 constexpr const char* kTag = "LocalLinkSession";
 constexpr int kMaxSlicesPerSchedulerTick = 512;
+constexpr int kBalancedSliceBudget = 96;
 constexpr std::int64_t kNoTransferWarningMs = 5000;
 
 std::int64_t steadyNowMs() {
@@ -85,7 +86,7 @@ std::string LocalLinkSession::start(
         ANDROID_LOG_INFO,
         kTag,
         "start local link test schedulerMode=%s",
-        schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep ? "experimental_lockstep" : "stable"
+        schedulerMode_ == LocalLinkSchedulerMode::BalancedLockstep ? "balanced_lockstep" : "stable"
     );
     __android_log_print(ANDROID_LOG_INFO, kTag, "slot 1 ROM path: %s", primaryRomPath.c_str());
     __android_log_print(ANDROID_LOG_INFO, kTag, "slot 2 ROM path: %s", secondaryRomPath.c_str());
@@ -249,10 +250,11 @@ void LocalLinkSession::schedulerTick() {
     slot1_.setInputMask(slot1InputMask_.load(std::memory_order_relaxed));
     slot2_.setInputMask(slot2InputMask_.load(std::memory_order_relaxed));
     int slicesUsed = 0;
-    if (schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep) {
-        slicesUsed = runExperimentalSchedulerTickLocked();
+    if (schedulerMode_ == LocalLinkSchedulerMode::BalancedLockstep) {
+        slicesUsed = runBalancedSchedulerTickLocked();
     } else {
         runStableSchedulerTickLocked();
+        prioritizedSlot_ = 0;
     }
     lastSlicesUsed_ = slicesUsed;
     const int transferPhase = static_cast<int>(lockstep_.d.transferActive);
@@ -308,7 +310,7 @@ void LocalLinkSession::schedulerTick() {
             ANDROID_LOG_INFO,
             kTag,
             "scheduler running: mode=%s slot1Frames=%llu slot2Frames=%llu renderSlot=%d attached=%d transferPhase=%d attempts=%llu completions=%llu sio1=%d sio2=%d signals=%llu waits=%llu",
-            schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep ? "experimental_lockstep" : "stable",
+            schedulerMode_ == LocalLinkSchedulerMode::BalancedLockstep ? "balanced_lockstep" : "stable",
             static_cast<unsigned long long>(slot1_.framesRun()),
             static_cast<unsigned long long>(slot2_.framesRun()),
             activeRenderSlot_,
@@ -329,12 +331,26 @@ void LocalLinkSession::runStableSchedulerTickLocked() {
     slot2_.runFrame();
 }
 
-int LocalLinkSession::runExperimentalSchedulerTickLocked() {
+int LocalLinkSession::runBalancedSchedulerTickLocked() {
     const std::uint64_t startFrames1 = slot1_.framesRun();
     const std::uint64_t startFrames2 = slot2_.framesRun();
+    const auto frameDelta = static_cast<int64_t>(startFrames1) - static_cast<int64_t>(startFrames2);
+    prioritizedSlot_ = 0;
+
+    if (frameDelta > 0) {
+        prioritizedSlot_ = 2;
+        slot2_.runFrame();
+        return 0;
+    }
+    if (frameDelta < 0) {
+        prioritizedSlot_ = 1;
+        slot1_.runFrame();
+        return 0;
+    }
+
     int slicesUsed = 0;
     while ((slot1_.framesRun() == startFrames1 || slot2_.framesRun() == startFrames2) &&
-           slicesUsed < kMaxSlicesPerSchedulerTick) {
+           slicesUsed < kBalancedSliceBudget) {
         if (slot1_.framesRun() == startFrames1) {
             slot1_.runFrameSlice();
             ++slicesUsed;
@@ -344,17 +360,41 @@ int LocalLinkSession::runExperimentalSchedulerTickLocked() {
             ++slicesUsed;
         }
     }
-    lastSlicesUsed_ = slicesUsed;
-    if (slicesUsed >= kMaxSlicesPerSchedulerTick) {
-        ++sliceLimitHitCount_;
+
+    const bool slot1Advanced = slot1_.framesRun() != startFrames1;
+    const bool slot2Advanced = slot2_.framesRun() != startFrames2;
+    if (!slot1Advanced && !slot2Advanced) {
+        prioritizedSlot_ = 0;
+        ++balancedFallbackCount_;
+        slot1_.runFrame();
+        slot2_.runFrame();
         __android_log_print(
-            ANDROID_LOG_WARN,
+            ANDROID_LOG_DEBUG,
             kTag,
-            "local link scheduler slice cap hit: slices=%d slot1Frames=%llu slot2Frames=%llu hits=%llu",
+            "balanced scheduler fallback: neither slot reached a frame within slice budget=%d fallbacks=%llu",
+            kBalancedSliceBudget,
+            static_cast<unsigned long long>(balancedFallbackCount_)
+        );
+    } else if (!slot1Advanced) {
+        prioritizedSlot_ = 1;
+        ++balancedFallbackCount_;
+        slot1_.runFrame();
+    } else if (!slot2Advanced) {
+        prioritizedSlot_ = 2;
+        ++balancedFallbackCount_;
+        slot2_.runFrame();
+    }
+
+    if (slicesUsed >= kBalancedSliceBudget) {
+        __android_log_print(
+            ANDROID_LOG_DEBUG,
+            kTag,
+            "balanced scheduler slice budget reached: slices=%d slot1Frames=%llu slot2Frames=%llu priority=%d fallbacks=%llu",
             slicesUsed,
             static_cast<unsigned long long>(slot1_.framesRun()),
             static_cast<unsigned long long>(slot2_.framesRun()),
-            static_cast<unsigned long long>(sliceLimitHitCount_)
+            prioritizedSlot_,
+            static_cast<unsigned long long>(balancedFallbackCount_)
         );
     }
     return slicesUsed;
@@ -366,6 +406,7 @@ void LocalLinkSession::resetDiagnosticsLocked() {
     transferAttemptCount_ = 0;
     transferCompleteCount_ = 0;
     sliceLimitHitCount_ = 0;
+    balancedFallbackCount_ = 0;
     previousTransferPhase_ = 0;
     previousSioMode1_ = -1;
     previousSioMode2_ = -1;
@@ -376,6 +417,7 @@ void LocalLinkSession::resetDiagnosticsLocked() {
     waitRatePerSecond_ = 0;
     schedulerTickRatePerSecond_ = 0;
     lastSlicesUsed_ = 0;
+    prioritizedSlot_ = 0;
     const std::int64_t now = steadyNowMs();
     startMonotonicMs_ = now;
     lastTransferActivityMs_ = now;
@@ -434,6 +476,9 @@ std::string LocalLinkSession::linkWarningLocked(std::int64_t nowMs) const {
     if (schedulerTickRatePerSecond_ < 30 && scheduler_.isRunning()) {
         return "scheduler_starvation";
     }
+    if (schedulerMode_ == LocalLinkSchedulerMode::BalancedLockstep && balancedFallbackCount_ > scheduler_.ticks() / 2 && scheduler_.ticks() > 120) {
+        return "balanced_fallback_high";
+    }
     if (sliceLimitHitCount_ > 0 && lastSlicesUsed_ >= kMaxSlicesPerSchedulerTick) {
         return "slice_cap_hit";
     }
@@ -459,7 +504,7 @@ std::string LocalLinkSession::statusLocked() const {
         : slot2_.framesRun() - slot1_.framesRun());
     std::ostringstream out;
     out << status_
-        << " schedulerMode=" << (schedulerMode_ == LocalLinkSchedulerMode::ExperimentalLockstep ? "experimental_lockstep" : "stable")
+        << " schedulerMode=" << (schedulerMode_ == LocalLinkSchedulerMode::BalancedLockstep ? "balanced_lockstep" : "stable")
         << " scheduler=" << (scheduler_.isRunning() ? "running" : "stopped")
         << " ticks=" << scheduler_.ticks()
         << " tickRate=" << schedulerTickRatePerSecond_
@@ -489,6 +534,8 @@ std::string LocalLinkSession::statusLocked() const {
         << " lastModeMsAgo=" << std::max<std::int64_t>(0, now - lastModeChangeMs_)
         << " slicesLastTick=" << lastSlicesUsed_
         << " sliceLimitHits=" << sliceLimitHitCount_
+        << " balancedFallbacks=" << balancedFallbackCount_
+        << " prioritizedSlot=" << prioritizedSlot_
         << " linkWarning=" << linkWarningLocked(now);
     return out.str();
 }
